@@ -8,6 +8,164 @@ MCP (Model Context Protocol) server for ASO (App Store Optimization) data manage
 npm install pabal-web-mcp
 ```
 
+## 🛠️ MCP Client Installation
+
+### Requirements
+
+- Node.js >= 18
+- MCP client: Cursor, Claude Code, VS Code, Windsurf, etc.
+
+> [!TIP]
+> If you repeatedly do ASO/store tasks, add a client rule like "always use pabal-web-mcp" so the MCP server auto-invokes without typing it every time.
+
+### Global install (recommended)
+
+```bash
+npm install -g pabal-web-mcp
+
+# or
+
+yarn global add pabal-web-mcp
+```
+
+Install globally first for fastest starts and to avoid npm download issues (proxy/firewall/offline). You can still use `npx -y pabal-web-mcp`, but global install is recommended. After global install, set your MCP config to `command: "pabal-web-mcp"` (no `npx` needed).
+
+<details>
+<summary><b>Install in Cursor</b></summary>
+
+Add to `~/.cursor/mcp.json` (global) or project `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Install in VS Code</b></summary>
+
+Example `settings.json` MCP section:
+
+```json
+"mcp": {
+  "servers": {
+    "pabal-web-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+"mcp": {
+  "servers": {
+    "pabal-web-mcp": {
+      "type": "stdio",
+      "command": "pabal-web-mcp"
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Install in Claude Code</b></summary>
+
+> [!TIP]
+> See the [official Claude Code MCP documentation](https://code.claude.com/docs/en/mcp#setting-up-enterprise-mcp-configuration) for detailed configuration options.
+
+Add to Claude Code MCP settings (JSON format):
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    }
+  }
+}
+```
+
+Or if installed globally (`npm install -g pabal-web-mcp`):
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Install in Windsurf</b></summary>
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    }
+  }
+}
+```
+
+</details>
+
+## MCP Server
+
+This package includes an MCP server for managing ASO data through Claude or other MCP-compatible clients.
+
+### Available Tools
+
+| Tool             | Description                                        |
+| ---------------- | -------------------------------------------------- |
+| `aso-to-public`  | Convert ASO data to public config format           |
+| `public-to-aso`  | Convert public config to ASO data format           |
+| `improve-public` | Improve product locale content with AI suggestions |
+| `init-project`   | Initialize a new product project structure         |
+
 ## Usage
 
 ### Importing Types
@@ -60,38 +218,6 @@ console.log(asoData.appStore?.name);
 console.log(asoData.googlePlay?.title);
 ```
 
-## MCP Server
-
-This package includes an MCP server for managing ASO data through Claude or other MCP-compatible clients.
-
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `aso-to-public` | Convert ASO data to public config format |
-| `public-to-aso` | Convert public config to ASO data format |
-| `improve-public` | Improve product locale content with AI suggestions |
-| `init-project` | Initialize a new product project structure |
-
-### Running the MCP Server
-
-```bash
-npx pabal-web-mcp
-```
-
-Or add to your Claude Desktop config:
-
-```json
-{
-  "mcpServers": {
-    "pabal-web-mcp": {
-      "command": "npx",
-      "args": ["pabal-web-mcp"]
-    }
-  }
-}
-```
-
 ## Types Reference
 
 ### ASO Types
@@ -116,17 +242,17 @@ Or add to your Claude Desktop config:
 ## Supported Locales
 
 | Unified | App Store | Google Play |
-|---------|-----------|-------------|
-| en-US | en-US | en-US |
-| ko-KR | ko | ko-KR |
-| ja-JP | ja | ja-JP |
-| zh-CN | zh-Hans | zh-CN |
-| zh-TW | zh-Hant | zh-TW |
-| de-DE | de-DE | de-DE |
-| fr-FR | fr-FR | fr-FR |
-| es-ES | es-ES | es-ES |
-| pt-BR | pt-BR | pt-BR |
-| ... | ... | ... |
+| ------- | --------- | ----------- |
+| en-US   | en-US     | en-US       |
+| ko-KR   | ko        | ko-KR       |
+| ja-JP   | ja        | ja-JP       |
+| zh-CN   | zh-Hans   | zh-CN       |
+| zh-TW   | zh-Hant   | zh-TW       |
+| de-DE   | de-DE     | de-DE       |
+| fr-FR   | fr-FR     | fr-FR       |
+| es-ES   | es-ES     | es-ES       |
+| pt-BR   | pt-BR     | pt-BR       |
+| ...     | ...       | ...         |
 
 ## License
 
