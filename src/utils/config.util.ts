@@ -53,17 +53,17 @@ export function getAsoDataDir(): string {
 }
 
 /**
- * Get the pullData directory path
+ * Get the pullData directory path (dataDir/.aso/pullData)
  */
 export function getPullDataDir(): string {
-  return path.join(getAsoDataDir(), "pullData");
+  return path.join(getAsoDataDir(), ".aso", "pullData");
 }
 
 /**
- * Get the pushData directory path
+ * Get the pushData directory path (dataDir/.aso/pushData)
  */
 export function getPushDataDir(): string {
-  return path.join(getAsoDataDir(), "pushData");
+  return path.join(getAsoDataDir(), ".aso", "pushData");
 }
 
 /**

@@ -240,8 +240,8 @@ export const publicToAsoTool = {
 This tool:
 1. Loads ASO data from public/products/[slug]/config.json + locales/
 2. Converts to store-compatible format (removes screenshots from metadata, sets contactWebsite/marketingUrl)
-3. Saves metadata to pushData/products/[slug]/store/ (path from ~/.config/pabal-mcp/config.json dataDir)
-4. Copies/downloads screenshots to pushData/products/[slug]/store/screenshots/
+3. Saves metadata to .aso/pushData/products/[slug]/store/ (path from ~/.config/pabal-mcp/config.json dataDir)
+4. Copies/downloads screenshots to .aso/pushData/products/[slug]/store/screenshots/
 
 Before running, review ${FIELD_LIMITS_DOC_PATH} for per-store limits. This prepares data for pushing to stores without actually uploading.`,
   inputSchema,

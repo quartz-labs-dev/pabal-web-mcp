@@ -52,9 +52,9 @@ export const asoToPublicTool = {
 **IMPORTANT:** The 'slug' parameter is REQUIRED. If the user does not provide a slug, you MUST ask them to provide it. This tool processes only ONE product at a time.
 
 This tool:
-1. Loads ASO data from pullData/products/[slug]/store/ (path from ~/.config/pabal-mcp/config.json dataDir)
+1. Loads ASO data from .aso/pullData/products/[slug]/store/ (path from ~/.config/pabal-mcp/config.json dataDir)
 2. Generates per-locale conversion prompts to map fullDescription into structured locale JSON (template intro/outro + landing features/screenshots captions)
-3. Next steps (manual): paste converted JSON into public/products/[slug]/locales/[locale].json and copy screenshots from pullData if needed
+3. Next steps (manual): paste converted JSON into public/products/[slug]/locales/[locale].json and copy screenshots from .aso/pullData if needed
 
 The conversion from unstructured to structured format is performed by Claude based on the conversion prompt.`,
   inputSchema,

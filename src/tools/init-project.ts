@@ -25,7 +25,7 @@ export const initProjectInputSchema = z.object({
     .trim()
     .optional()
     .describe(
-      "Optional product slug to focus on. Defaults to all slugs in pullData/products/"
+      "Optional product slug to focus on. Defaults to all slugs in .aso/pullData/products/"
     ),
 });
 
@@ -46,7 +46,7 @@ export const initProjectTool = {
 This tool is read-only and returns a checklist. It does not call pabal-mcp directly or write files.
 
 Steps:
-1) Ensure pabal-mcp 'init' ran and pullData/products/[slug]/ exists (path from ~/.config/pabal-mcp/config.json dataDir)
+1) Ensure pabal-mcp 'init' ran and .aso/pullData/products/[slug]/ exists (path from ~/.config/pabal-mcp/config.json dataDir)
 2) Convert pulled ASO data -> public/products/[slug]/ using pabal-web-mcp tools (aso-to-public, public-to-aso dry run)
 3) Validate outputs and next actions`,
   inputSchema,
@@ -90,7 +90,7 @@ export async function handleInitProject(
 
   if (targetSlugs.length === 0) {
     lines.push(
-      "No products detected. Run pabal-mcp 'init' for your slug(s) to populate pullData/products/, then rerun this tool."
+      "No products detected. Run pabal-mcp 'init' for your slug(s) to populate .aso/pullData/products/, then rerun this tool."
     );
     return {
       content: [
