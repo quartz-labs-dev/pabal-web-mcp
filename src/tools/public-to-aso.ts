@@ -25,7 +25,8 @@ import {
   unifiedToGooglePlay,
   unifiedToAppStore,
 } from "../utils/locale-converter.js";
-import { getPushDataDir } from "../utils/config.util.js";
+import { getPushDataDir, getProductsDir } from "../utils/config.util.js";
+import fs from "node:fs";
 
 const FIELD_LIMITS_DOC_PATH = "docs/aso/ASO_FIELD_LIMITS.md";
 
@@ -73,12 +74,7 @@ async function downloadScreenshotsToAsoDir(
   options?: { rootDir?: string }
 ): Promise<void> {
   const rootDir = options?.rootDir ?? getPushDataDir();
-  const productStoreRoot = path.join(
-    rootDir,
-    "products",
-    slug,
-    "store"
-  );
+  const productStoreRoot = path.join(rootDir, "products", slug, "store");
 
   // Download Google Play screenshots (all locales)
   if (asoData.googlePlay) {
@@ -263,7 +259,96 @@ export async function handlePublicToAso(
   const configData = loadAsoFromConfig(slug);
 
   if (!configData.googlePlay && !configData.appStore) {
-    throw new Error(`No ASO data found in config.json + locales/ for ${slug}`);
+    const productsDir = getProductsDir();
+    const configPath = path.join(productsDir, slug, "config.json");
+    const localesDir = path.join(productsDir, slug, "locales");
+
+    const errors: string[] = [];
+
+    if (!fs.existsSync(configPath)) {
+      errors.push(`- config.json not found at ${configPath}`);
+    } else {
+      try {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        if (!config.packageName && !config.bundleId) {
+          errors.push(
+            `- config.json exists but missing both packageName and bundleId`
+          );
+        } else {
+          if (config.packageName) {
+            errors.push(`- packageName found: ${config.packageName}`);
+          }
+          if (config.bundleId) {
+            errors.push(`- bundleId found: ${config.bundleId}`);
+          }
+        }
+      } catch (e) {
+        errors.push(
+          `- Failed to parse config.json: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        );
+      }
+    }
+
+    if (!fs.existsSync(localesDir)) {
+      errors.push(`- locales directory not found at ${localesDir}`);
+    } else {
+      try {
+        const localeFiles = fs
+          .readdirSync(localesDir)
+          .filter((f) => f.endsWith(".json"));
+        if (localeFiles.length === 0) {
+          errors.push(`- locales directory exists but no .json files found`);
+        } else {
+          errors.push(
+            `- Found ${localeFiles.length} locale file(s): ${localeFiles.join(
+              ", "
+            )}`
+          );
+          // Check if any locale is valid
+          const validLocales: string[] = [];
+          const invalidLocales: string[] = [];
+          for (const file of localeFiles) {
+            const localeCode = file.replace(".json", "");
+            if (
+              isGooglePlayLocale(localeCode) ||
+              isAppStoreLocale(localeCode)
+            ) {
+              validLocales.push(localeCode);
+            } else {
+              invalidLocales.push(localeCode);
+            }
+          }
+          if (validLocales.length > 0) {
+            errors.push(`- Valid locales: ${validLocales.join(", ")}`);
+          }
+          if (invalidLocales.length > 0) {
+            errors.push(
+              `- Invalid locales (not supported by Google Play or App Store): ${invalidLocales.join(
+                ", "
+              )}`
+            );
+          }
+        }
+      } catch (e) {
+        errors.push(
+          `- Failed to read locales directory: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        );
+      }
+    }
+
+    throw new Error(
+      `No ASO data found in config.json + locales/ for ${slug}\n\n` +
+        `Diagnostics:\n${errors.join("\n")}\n\n` +
+        `Possible causes:\n` +
+        `1. config.json is missing packageName (for Google Play) or bundleId (for App Store)\n` +
+        `2. locales/ directory is missing or empty\n` +
+        `3. Locale files exist but don't match supported Google Play/App Store locales\n` +
+        `4. Locale files don't contain valid ASO data`
+    );
   }
 
   // Prepare data for push (remove screenshots, set contactWebsite, etc.)

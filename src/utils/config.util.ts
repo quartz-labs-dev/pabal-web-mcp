@@ -67,14 +67,14 @@ export function getPushDataDir(): string {
 }
 
 /**
- * Get the public directory path (always relative to process.cwd())
+ * Get the public directory path (dataDir/public)
  */
 export function getPublicDir(): string {
-  return path.join(process.cwd(), "public");
+  return path.join(getAsoDataDir(), "public");
 }
 
 /**
- * Get the products directory path (public/products)
+ * Get the products directory path (dataDir/public/products)
  */
 export function getProductsDir(): string {
   return path.join(getPublicDir(), "products");
