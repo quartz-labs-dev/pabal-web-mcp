@@ -12,18 +12,6 @@ MCP (Model Context Protocol) server for ASO (App Store Optimization) data manage
 > [!TIP]
 > If you repeatedly do ASO/store tasks, add a client rule like "always use pabal-web-mcp" so the MCP server auto-invokes without typing it every time.
 
-### Global install (recommended)
-
-```bash
-npm install -g pabal-web-mcp
-
-# or
-
-yarn global add pabal-web-mcp
-```
-
-Install globally first for fastest starts and to avoid npm download issues (proxy/firewall/offline). You can still use `npx -y pabal-web-mcp`, but global install is recommended. After global install, set your MCP config to `command: "pabal-web-mcp"` (no `npx` needed).
-
 <details>
 <summary><b>Install in Cursor</b></summary>
 
