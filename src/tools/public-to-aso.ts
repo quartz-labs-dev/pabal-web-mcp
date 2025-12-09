@@ -70,10 +70,9 @@ const inputSchema = jsonSchema.definitions?.PublicToAsoInput || jsonSchema;
  */
 async function downloadScreenshotsToAsoDir(
   slug: string,
-  asoData: AsoData,
-  options?: { rootDir?: string }
+  asoData: AsoData
 ): Promise<void> {
-  const rootDir = options?.rootDir ?? getPushDataDir();
+  const rootDir = getPushDataDir();
   const productStoreRoot = path.join(rootDir, "products", slug, "store");
 
   // Download Google Play screenshots (all locales)
@@ -372,12 +371,10 @@ export async function handlePublicToAso(
   }
 
   // Save metadata to pushData
-  saveRawAsoData(slug, storeData, { rootDir: pushDataRoot });
+  saveRawAsoData(slug, storeData);
 
   // Download/copy screenshots
-  await downloadScreenshotsToAsoDir(slug, configData, {
-    rootDir: pushDataRoot,
-  });
+  await downloadScreenshotsToAsoDir(slug, configData);
 
   const localeCounts: { googlePlay?: number; appStore?: number } = {};
 

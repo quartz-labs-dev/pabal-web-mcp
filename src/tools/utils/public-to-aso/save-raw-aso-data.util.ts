@@ -12,11 +12,10 @@ import { getPushDataDir } from "../../../utils/config.util.js";
  */
 export function saveRawAsoData(
   slug: string,
-  asoData: Partial<AsoData>,
-  options?: { rootDir?: string }
+  asoData: Partial<AsoData>
 ): void {
-  const rootDir = options?.rootDir ?? getPushDataDir();
-  saveAsoToAsoDir(slug, asoData, { rootDir });
+  const rootDir = getPushDataDir();
+  saveAsoToAsoDir(slug, asoData);
 
   const localeCounts: { googlePlay?: number; appStore?: number } = {};
 

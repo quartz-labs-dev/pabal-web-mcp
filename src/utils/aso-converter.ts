@@ -341,12 +341,8 @@ export function saveAsoToConfig(slug: string, config: ProductConfig): void {
 /**
  * ASO 데이터를 지정한 ASO 디렉토리에 저장합니다
  */
-export function saveAsoToAsoDir(
-  slug: string,
-  asoData: AsoData,
-  options?: { rootDir?: string }
-): void {
-  const rootDir = options?.rootDir ?? getPushDataDir();
+export function saveAsoToAsoDir(slug: string, asoData: AsoData): void {
+  const rootDir = getPushDataDir();
 
   // Google Play 데이터 저장
   if (asoData.googlePlay) {
