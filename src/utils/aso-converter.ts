@@ -16,6 +16,7 @@ import type {
 import {
   isGooglePlayLocale,
   isAppStoreLocale,
+  isSupportedLocale,
 } from "../types/aso/index.js";
 import { DEFAULT_LOCALE } from "../constants/unified-locales.js";
 import { getPushDataDir, getProductsDir } from "./config.util.js";
@@ -96,11 +97,7 @@ function generateFullDescription(
  */
 export function loadAsoFromConfig(slug: string): AsoData {
   const productsDir = getProductsDir();
-  const configPath = path.join(
-    productsDir,
-    slug,
-    "config.json"
-  );
+  const configPath = path.join(productsDir, slug, "config.json");
 
   if (!fs.existsSync(configPath)) {
     return {};
@@ -111,11 +108,7 @@ export function loadAsoFromConfig(slug: string): AsoData {
     const config = JSON.parse(configContent) as ProductConfig;
 
     // Load locales from separate files
-    const localesDir = path.join(
-      productsDir,
-      slug,
-      "locales"
-    );
+    const localesDir = path.join(productsDir, slug, "locales");
 
     if (!fs.existsSync(localesDir)) {
       return {};
@@ -134,6 +127,11 @@ export function loadAsoFromConfig(slug: string): AsoData {
       locales[localeCode] = JSON.parse(localeContent) as ProductLocale;
     }
 
+    // Debug: Log loaded locales
+    if (Object.keys(locales).length === 0) {
+      console.warn(`No locale files found in ${localesDir}`);
+    }
+
     const defaultLocale = config.content?.defaultLocale || DEFAULT_LOCALE;
     const asoData: AsoData = {};
 
@@ -144,15 +142,37 @@ export function loadAsoFromConfig(slug: string): AsoData {
       const screenshots: ProductScreenshots = metadata.screenshots || {};
 
       for (const [locale, localeData] of Object.entries(locales)) {
+        // First check if locale is a valid unified locale
+        if (!isSupportedLocale(locale)) {
+          console.debug(
+            `Skipping locale ${locale} - not a valid unified locale`
+          );
+          continue;
+        }
+        // Then check if locale is supported by Google Play
         if (!isGooglePlayLocale(locale)) {
+          console.debug(
+            `Skipping locale ${locale} - not supported by Google Play`
+          );
           continue;
         }
         const aso: AsoLocaleContent = localeData.aso || {};
 
+        // Debug: Check if ASO data exists
+        if (!aso || (!aso.title && !aso.shortDescription)) {
+          console.warn(
+            `Locale ${locale} has no ASO data (title or shortDescription)`
+          );
+        }
+
         // Add locale to screenshot paths
         const localeScreenshots: typeof screenshots = {
-          phone: screenshots.phone?.map(p => p.replace('/screenshots/', `/screenshots/${locale}/`)),
-          tablet: screenshots.tablet?.map(p => p.replace('/screenshots/', `/screenshots/${locale}/`)),
+          phone: screenshots.phone?.map((p) =>
+            p.replace("/screenshots/", `/screenshots/${locale}/`)
+          ),
+          tablet: screenshots.tablet?.map((p) =>
+            p.replace("/screenshots/", `/screenshots/${locale}/`)
+          ),
         };
 
         googlePlayLocales[locale] = {
@@ -193,15 +213,37 @@ export function loadAsoFromConfig(slug: string): AsoData {
       const screenshots: ProductScreenshots = metadata.screenshots || {};
 
       for (const [locale, localeData] of Object.entries(locales)) {
+        // First check if locale is a valid unified locale
+        if (!isSupportedLocale(locale)) {
+          console.debug(
+            `Skipping locale ${locale} - not a valid unified locale`
+          );
+          continue;
+        }
+        // Then check if locale is supported by App Store
         if (!isAppStoreLocale(locale)) {
+          console.debug(
+            `Skipping locale ${locale} - not supported by App Store`
+          );
           continue;
         }
         const aso: AsoLocaleContent = localeData.aso || {};
 
+        // Debug: Check if ASO data exists
+        if (!aso || (!aso.title && !aso.shortDescription)) {
+          console.warn(
+            `Locale ${locale} has no ASO data (title or shortDescription)`
+          );
+        }
+
         // Add locale to screenshot paths
         const localeScreenshots: typeof screenshots = {
-          phone: screenshots.phone?.map(p => p.replace('/screenshots/', `/screenshots/${locale}/`)),
-          tablet: screenshots.tablet?.map(p => p.replace('/screenshots/', `/screenshots/${locale}/`)),
+          phone: screenshots.phone?.map((p) =>
+            p.replace("/screenshots/", `/screenshots/${locale}/`)
+          ),
+          tablet: screenshots.tablet?.map((p) =>
+            p.replace("/screenshots/", `/screenshots/${locale}/`)
+          ),
         };
 
         appStoreLocales[locale] = {
@@ -256,11 +298,7 @@ export function loadAsoFromConfig(slug: string): AsoData {
  */
 export function saveAsoToConfig(slug: string, config: ProductConfig): void {
   const productsDir = getProductsDir();
-  const configPath = path.join(
-    productsDir,
-    slug,
-    "config.json"
-  );
+  const configPath = path.join(productsDir, slug, "config.json");
 
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n", "utf-8");
 }

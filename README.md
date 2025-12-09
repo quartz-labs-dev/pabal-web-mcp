@@ -2,12 +2,6 @@
 
 MCP (Model Context Protocol) server for ASO (App Store Optimization) data management with shared types and utilities.
 
-## Installation
-
-```bash
-npm install pabal-web-mcp
-```
-
 ## 🛠️ MCP Client Installation
 
 ### Requirements
