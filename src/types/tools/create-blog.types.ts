@@ -21,7 +21,8 @@ export interface BlogMetaOutput {
 
 export interface CreateBlogHtmlInput {
   /**
-   * Product/app slug used for paths and CTAs
+   * Product/app slug used for paths and CTAs.
+   * Defaults to "developer" when not provided.
    */
   appSlug: string;
   /**

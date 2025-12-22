@@ -11,6 +11,7 @@ import {
   slugifyTitle,
 } from "../utils/blog.util.js";
 import { getPublicDir } from "../utils/config.util.js";
+import { DEFAULT_APP_SLUG } from "../constants/blog.constants.js";
 import type {
   BlogMetaOutput,
   CreateBlogHtmlResult,
@@ -38,8 +39,11 @@ export const createBlogHtmlInputSchema = z
     appSlug: z
       .string()
       .trim()
-      .min(1, "appSlug is required")
-      .describe("Product/app slug used for paths and CTAs"),
+      .min(1)
+      .default(DEFAULT_APP_SLUG)
+      .describe(
+        `Product/app slug used for paths and CTAs. Defaults to "${DEFAULT_APP_SLUG}" when not provided.`
+      ),
     title: z
       .string()
       .trim()
@@ -138,10 +142,15 @@ IMPORTANT REQUIREMENTS:
 1. The 'locale' parameter is REQUIRED. If the user does not provide a locale, you MUST ask them to specify which language/locale they want to write the blog in (e.g., 'en-US', 'ko-KR', 'ja-JP', etc.).
 2. The 'content' parameter is REQUIRED. You (the LLM) must generate the HTML content based on the 'topic' and 'locale' provided by the user. The content should be written in the language corresponding to the locale AND match the writing style of existing blog posts for that locale.
 3. The 'description' parameter is REQUIRED. You (the LLM) must generate this based on the topic, locale, AND the writing style of existing blog posts.
+4. The 'appSlug' parameter: 
+   - If the user explicitly requests "developer category", "developer blog", "personal category", "my category", or similar, you MUST set appSlug to "developer".
+   - If the user mentions a specific app/product, use that app's slug.
+   - If not specified, defaults to "developer".
 
 Slug rules:
 - slug = slugify(English title, kebab-case ASCII)
 - path: public/blogs/<appSlug>/<slug>/<locale>.html
+- appSlug: Use "developer" when user requests developer/personal category. Defaults to "developer" if not specified.
 - coverImage default: /products/<appSlug>/og-image.png (relative paths are rewritten under /blogs/<app>/<slug>/)
 - overwrite defaults to false (throws when file exists)
 
@@ -163,7 +172,7 @@ export async function handleCreateBlogHtml(
   const publicDir = getPublicDir();
 
   const {
-    appSlug,
+    appSlug = DEFAULT_APP_SLUG,
     topic,
     title,
     description,
