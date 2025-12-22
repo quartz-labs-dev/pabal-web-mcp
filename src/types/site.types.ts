@@ -1,9 +1,37 @@
 /**
  * Site data type definitions
  * Structure for public/site/ directory
+ * - config.json: Site configuration (supported locales, default locale)
  * - contacts.json: Contact information
  * - locales/en-US.json: Localized content (meta, hero, developer)
  */
+
+import type { UnifiedLocale } from "../constants/unified-locales.js";
+
+/**
+ * Site configuration for locale support
+ * Stored in public/site/config.json
+ */
+export interface SiteConfig {
+  /** List of locales supported by this site */
+  supportedLocales: UnifiedLocale[];
+  /** Default locale for fallback */
+  defaultLocale: UnifiedLocale;
+}
+
+/**
+ * Locale display information for UI components
+ */
+export interface LocaleDisplayInfo {
+  /** Locale code (e.g., "en-US", "ko-KR") */
+  code: UnifiedLocale;
+  /** English name of the language */
+  name: string;
+  /** Native name of the language */
+  nativeName: string;
+  /** Flag emoji */
+  flag: string;
+}
 
 export interface SiteData {
   meta: {
@@ -38,3 +66,6 @@ export interface SiteData {
     };
   };
 }
+
+
+
