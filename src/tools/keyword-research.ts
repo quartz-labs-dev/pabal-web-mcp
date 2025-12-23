@@ -60,6 +60,13 @@ export const keywordResearchInputSchema = z.object({
     .describe(
       "Optional JSON string with research results (e.g., from mcp-appstore tools). If provided, saves it to the output path."
     ),
+  researchDataPath: z
+    .string()
+    .trim()
+    .optional()
+    .describe(
+      "Optional path to a JSON file containing research results. If set, file content is saved to the output path (preferred to avoid escape errors)."
+    ),
 });
 
 export type KeywordResearchInput = z.infer<typeof keywordResearchInputSchema>;
@@ -183,6 +190,7 @@ export async function handleKeywordResearch(
     filename,
     writeTemplate = false,
     researchData,
+    researchDataPath,
   } = input;
 
   const { config, locales } = loadProductLocales(slug);
@@ -261,19 +269,41 @@ export async function handleKeywordResearch(
   let outputPath = path.join(researchDir, fileName);
   let fileAction: string | undefined;
 
+  const parseJsonWithContext = (text: string) => {
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const match =
+        /position (\d+)/i.exec(message) ||
+        /column (\d+)/i.exec(message) ||
+        /char (\d+)/i.exec(message);
+      if (match) {
+        const pos = Number(match[1]);
+        const start = Math.max(0, pos - 40);
+        const end = Math.min(text.length, pos + 40);
+        const context = text.slice(start, end);
+        throw new Error(
+          `Failed to parse researchData JSON: ${message}\nContext around ${pos}: ${context}`
+        );
+      }
+      throw new Error(`Failed to parse researchData JSON: ${message}`);
+    }
+  };
+
+  const loadResearchDataFromPath = (p: string) => {
+    if (!fs.existsSync(p)) {
+      throw new Error(`researchDataPath not found: ${p}`);
+    }
+    const raw = fs.readFileSync(p, "utf-8");
+    return parseJsonWithContext(raw);
+  };
+
   if (writeTemplate || researchData) {
     const payload = researchData
-      ? (() => {
-          try {
-            return JSON.parse(researchData);
-          } catch (err) {
-            throw new Error(
-              `Failed to parse researchData JSON: ${
-                err instanceof Error ? err.message : String(err)
-              }`
-            );
-          }
-        })()
+      ? parseJsonWithContext(researchData)
+      : researchDataPath
+      ? loadResearchDataFromPath(researchDataPath)
       : buildTemplate({
           slug,
           locale,
