@@ -7,6 +7,10 @@ import {
   loadProductLocales,
   resolvePrimaryLocale,
 } from "./utils/improve-public/load-product-locales.util.js";
+import {
+  findRegisteredApp,
+  getSupportedLocalesForSlug,
+} from "../utils/registered-apps.util.js";
 
 const TOOL_NAME = "keyword-research";
 
@@ -105,26 +109,31 @@ function buildTemplate({
     },
     plan: {
       steps: [
-        "Start mcp-appstore server (npm start in external-tools/mcp-appstore).",
+        "Start mcp-appstore server (node server.js in external-tools/mcp-appstore).",
+        "Confirm app IDs/locales: get_app_details(appId from config/registered-apps) to lock country/lang and competitors.",
         "Discover competitors: search_app(term=seed keyword), get_similar_apps(appId=known competitor).",
-        "Collect candidates: suggest_keywords_by_seeds, suggest_keywords_by_category, suggest_keywords_by_similarity, suggest_keywords_by_competition.",
+        "Collect candidates: suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).",
         "Score shortlist: get_keyword_scores for 15–30 candidates per platform/country.",
-        "Context check: analyze_reviews on top apps for language/tone cues.",
+        "Context check: analyze_reviews and fetch_reviews on top apps for language/tone cues.",
       ],
       note: "Run per platform/country. Save raw tool outputs plus curated top keywords.",
     },
     data: {
       raw: {
         searchApp: [],
+        getAppDetails: [],
+        similarApps: [],
         keywordSuggestions: {
           bySeeds: [],
           byCategory: [],
           bySimilarity: [],
           byCompetition: [],
           bySearchHints: [],
+          byApps: [],
         },
         keywordScores: [],
         reviewsAnalysis: [],
+        reviewsRaw: [],
       },
       summary: {
         recommendedKeywords: [],
@@ -179,6 +188,9 @@ export async function handleKeywordResearch(
   const { config, locales } = loadProductLocales(slug);
   const primaryLocale = resolvePrimaryLocale(config, locales);
   const primaryLocaleData = locales[primaryLocale];
+  const { app: registeredApp, path: registeredPath } = findRegisteredApp(slug);
+  const { supportedLocales, path: supportedPath } =
+    getSupportedLocalesForSlug(slug, platform);
 
   // Derive auto seeds/competitors if not provided
   const autoSeeds: string[] = [];
@@ -192,15 +204,39 @@ export async function handleKeywordResearch(
 
   if (config?.name) autoSeeds.push(config.name);
   if (config?.tagline) autoSeeds.push(config.tagline);
+  if (!config?.name && registeredApp?.name) autoSeeds.push(registeredApp.name);
+  if (!primaryLocaleData?.aso?.title) {
+    if (platform === "ios" && registeredApp?.appStore?.name) {
+      autoSeeds.push(registeredApp.appStore.name);
+    }
+    if (platform === "android" && registeredApp?.googlePlay?.name) {
+      autoSeeds.push(registeredApp.googlePlay.name);
+    }
+  }
 
   if (platform === "ios") {
     if (config?.appStoreAppId) {
       autoCompetitors.push({ appId: String(config.appStoreAppId), platform });
     } else if (config?.bundleId) {
       autoCompetitors.push({ appId: config.bundleId, platform });
+    } else if (registeredApp?.appStore?.appId) {
+      autoCompetitors.push({
+        appId: String(registeredApp.appStore.appId),
+        platform,
+      });
+    } else if (registeredApp?.appStore?.bundleId) {
+      autoCompetitors.push({
+        appId: registeredApp.appStore.bundleId,
+        platform,
+      });
     }
   } else if (platform === "android" && config?.packageName) {
     autoCompetitors.push({ appId: config.packageName, platform });
+  } else if (platform === "android" && registeredApp?.googlePlay?.packageName) {
+    autoCompetitors.push({
+      appId: registeredApp.googlePlay.packageName,
+      platform,
+    });
   }
 
   const resolvedSeeds =
@@ -268,6 +304,22 @@ export async function handleKeywordResearch(
   lines.push(`# Keyword research plan (${slug})`);
   lines.push(`Locale: ${locale} | Platform: ${platform} | Country: ${resolvedCountry}`);
   lines.push(`Primary locale detected: ${primaryLocale}`);
+  if (supportedLocales.length > 0) {
+    lines.push(
+      `Registered supported locales (${platform}): ${supportedLocales.join(
+        ", "
+      )} (source: ${supportedPath})`
+    );
+    if (!supportedLocales.includes(locale)) {
+      lines.push(
+        `WARNING: locale ${locale} not in registered supported locales. Confirm this locale or update registered-apps.json.`
+      );
+    }
+  } else {
+    lines.push(
+      `Registered supported locales not found for ${platform} (checked: ${supportedPath}).`
+    );
+  }
   lines.push(
     `Seeds: ${
       resolvedSeeds.length > 0
@@ -290,19 +342,22 @@ export async function handleKeywordResearch(
     `1) Start the local mcp-appstore server for this run: node server.js (cwd: /ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore). LLM should start it before calling tools and stop it after, if the client supports process management; otherwise, start/stop manually.`
   );
   lines.push(
-    `2) Discover apps: search_app(term=seed, platform=${platform}, country=${country}); get_similar_apps(appId=known competitor).`
+    `2) Confirm IDs/locales: get_app_details(appId from config/registered-apps) to lock locale/country and competitor list.`
   );
   lines.push(
-    `3) Expand keywords: suggest_keywords_by_seeds, suggest_keywords_by_category, suggest_keywords_by_similarity, suggest_keywords_by_competition, suggest_keywords_by_search.`
+    `3) Discover apps: search_app(term=seed, platform=${platform}, country=${resolvedCountry}); get_similar_apps(appId=known competitor).`
   );
   lines.push(
-    `4) Score shortlist: get_keyword_scores for 15–30 candidates (note: scores are heuristic per README).`
+    `4) Expand keywords: suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).`
   );
   lines.push(
-    `5) Context check: analyze_reviews on top apps to harvest native phrasing; keep snippets for improve-public.`
+    `5) Score shortlist: get_keyword_scores for 15–30 candidates (note: scores are heuristic per README).`
   );
   lines.push(
-    `6) Save all raw responses + your final top 10–15 keywords to: ${outputPath} (structure mirrors .aso/pullData/.aso/pushData under products/<slug>/locales/<locale>)`
+    `6) Context check: analyze_reviews and fetch_reviews on top apps to harvest native phrasing; keep snippets for improve-public.`
+  );
+  lines.push(
+    `7) Save all raw responses + your final top 10–15 keywords to: ${outputPath} (structure mirrors .aso/pullData/.aso/pushData under products/<slug>/locales/<locale>)`
   );
   if (fileAction) {
     lines.push(`File: ${fileAction} at ${outputPath}`);

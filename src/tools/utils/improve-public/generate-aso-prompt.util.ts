@@ -58,6 +58,7 @@ export function generatePrimaryOptimizationPrompt(
   prompt += `## Step 2: Optimize All Fields (${primaryLocale})\n\n`;
   prompt += `Apply the selected keywords to ALL fields:\n`;
   prompt += `- \`aso.title\` (≤30): **"App Name: Primary Keyword"** format (app name in English, keyword in target language, keyword starts with uppercase after the colon)\n`;
+  prompt += `  - **Do NOT translate/rename the app name**; keep the original English app name across all locales.\n`;
   prompt += `- \`aso.subtitle\` (≤30): Complementary keywords\n`;
   prompt += `- \`aso.shortDescription\` (≤80): Primary keywords (no emojis/CAPS)\n`;
   prompt += `- \`aso.keywords\` (≤100): Comma-separated 10 keywords\n`;
@@ -193,6 +194,7 @@ export function generateKeywordLocalizationPrompt(
   prompt += `   - Primary keyword: **In target language** (e.g., "오로라 예보" for Korean, "オーロラ予報" for Japanese)\n`;
   prompt += `   - Example: "Aurora EOS: 오로라 예보" (Korean), "Aurora EOS: オーロラ予報" (Japanese)\n`;
   prompt += `   - The keyword after the colon must start with an uppercase letter\n`;
+  prompt += `   - **Do NOT translate/rename the app name**; keep the original English app name across all locales.\n`;
   prompt += `4. Swap keywords in sentences while keeping:\n`;
   prompt += `   - Original sentence structure\n`;
   prompt += `   - Tone and messaging\n`;
