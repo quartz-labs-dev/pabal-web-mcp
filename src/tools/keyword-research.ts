@@ -122,8 +122,9 @@ function buildTemplate({
         "Collect candidates: suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).",
         "Score shortlist: get_keyword_scores for 15–30 candidates per platform/country.",
         "Context check: analyze_reviews and fetch_reviews on top apps for language/tone cues.",
+        "If keywordSuggestions/similar/reviews are sparse, rerun calls (add more competitors/seeds) until you have 10–15 strong keywords."
       ],
-      note: "Run per platform/country. Save raw tool outputs plus curated top keywords.",
+      note: "Run per platform/country. Save raw tool outputs plus curated top keywords (target 10–15 per locale: 2–3 high-traffic core, 4–6 mid-competition, 4–6 longtail).",
     },
     data: {
       raw: {
@@ -145,7 +146,8 @@ function buildTemplate({
       summary: {
         recommendedKeywords: [],
         rationale: "",
-        nextActions: "Feed top 10–15 into improve-public Stage 1.",
+        nextActions:
+          "Feed 10–15 mixed keywords (core/mid/longtail) into improve-public Stage 1.",
       },
     },
   };
@@ -387,7 +389,10 @@ export async function handleKeywordResearch(
     `6) Context check: analyze_reviews and fetch_reviews on top apps to harvest native phrasing; keep snippets for improve-public.`
   );
   lines.push(
-    `7) Save all raw responses + your final top 10–15 keywords to: ${outputPath} (structure mirrors .aso/pullData/.aso/pushData under products/<slug>/locales/<locale>)`
+    `7) Save all raw responses + your final 10–15 keywords (mix of core/high-traffic, mid, longtail) to: ${outputPath} (structure mirrors .aso/pullData/.aso/pushData under products/<slug>/locales/<locale>)`
+  );
+  lines.push(
+    `8) If keywordSuggestions/similarApps/reviews are still empty or <10 solid candidates, add more competitors/seeds and rerun the calls above until you reach 10–15 strong keywords.`
   );
   if (fileAction) {
     lines.push(`File: ${fileAction} at ${outputPath}`);
