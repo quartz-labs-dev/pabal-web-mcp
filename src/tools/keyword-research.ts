@@ -117,12 +117,14 @@ function buildTemplate({
     plan: {
       steps: [
         "Start mcp-appstore server (node server.js in external-tools/mcp-appstore).",
-        "Confirm app IDs/locales: get_app_details(appId from config/registered-apps) to lock country/lang and competitors.",
-        "Discover competitors: search_app(term=seed keyword), get_similar_apps(appId=known competitor).",
-        "Collect candidates: suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).",
+        "Confirm app IDs/locales: get_app_details(appId from config/registered-apps) to lock country/lang and 3–5 competitors.",
+        "Discover competitors: search_app(term=seed keyword, num=10–20), get_similar_apps(appId=top competitor, num=10).",
+        "Collect candidates (all of these, num=20–30): suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search; suggest_keywords_by_apps(apps=[top competitors]).",
         "Score shortlist: get_keyword_scores for 15–30 candidates per platform/country.",
-        "Context check: analyze_reviews and fetch_reviews on top apps for language/tone cues.",
-        "If keywordSuggestions/similar/reviews are sparse, rerun calls (add more competitors/seeds) until you have 10–15 strong keywords."
+        "Context check: analyze_reviews (num=100–200) and fetch_reviews (num=50–100) on top apps for language/tone cues.",
+        "If keywordSuggestions/similar/reviews are sparse, rerun calls (add more competitors/seeds) until you have 10–15 strong keywords.",
+        "For any recommended keyword without scores, rerun get_keyword_scores to fill traffic/difficulty.",
+        "Keep rationale/nextActions in English by default unless you intentionally localize them."
       ],
       note: "Run per platform/country. Save raw tool outputs plus curated top keywords (target 10–15 per locale: 2–3 high-traffic core, 4–6 mid-competition, 4–6 longtail).",
     },
@@ -377,22 +379,25 @@ export async function handleKeywordResearch(
     `2) Confirm IDs/locales: get_app_details(appId from config/registered-apps) to lock locale/country and competitor list.`
   );
   lines.push(
-    `3) Discover apps: search_app(term=seed, platform=${platform}, country=${resolvedCountry}); get_similar_apps(appId=known competitor).`
+    `3) Discover apps: search_app(term=seed, num=10-20, platform=${platform}, country=${resolvedCountry}); get_similar_apps(appId=top competitor, num=10).`
   );
   lines.push(
-    `4) Expand keywords: suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).`
+    `4) Expand keywords (num=20-30 each): suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).`
   );
   lines.push(
     `5) Score shortlist: get_keyword_scores for 15–30 candidates (note: scores are heuristic per README).`
   );
   lines.push(
-    `6) Context check: analyze_reviews and fetch_reviews on top apps to harvest native phrasing; keep snippets for improve-public.`
+    `6) Context check: analyze_reviews (num=100-200) and fetch_reviews (num=50-100) on top apps to harvest native phrasing; keep snippets for improve-public.`
   );
   lines.push(
     `7) Save all raw responses + your final 10–15 keywords (mix of core/high-traffic, mid, longtail) to: ${outputPath} (structure mirrors .aso/pullData/.aso/pushData under products/<slug>/locales/<locale>)`
   );
   lines.push(
     `8) If keywordSuggestions/similarApps/reviews are still empty or <10 solid candidates, add more competitors/seeds and rerun the calls above until you reach 10–15 strong keywords.`
+  );
+  lines.push(
+    `9) If any recommended keywords lack scores, rerun get_keyword_scores for those items. Keep rationale/nextActions in English by default unless you explicitly want them localized.`
   );
   if (fileAction) {
     lines.push(`File: ${fileAction} at ${outputPath}`);
