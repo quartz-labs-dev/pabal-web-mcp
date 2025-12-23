@@ -23,8 +23,14 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": "./dist/browser.js",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.js"
     },
     "./server": {
       "types": "./dist/index.d.ts",
@@ -33,6 +39,10 @@
     }
   },
   "browser": {
+    "./dist/index.js": "./dist/browser.js",
+    "fs": false,
+    "path": false,
+    "os": false,
     "node:fs": false,
     "node:path": false,
     "node:os": false
@@ -45,7 +55,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts src/bin/mcp-server.ts --format esm --dts --external node:fs --external node:path --external node:os",
+    "build": "tsup src/index.ts src/browser.ts src/bin/mcp-server.ts --format esm --dts --external node:fs --external node:path --external node:os",
     "dev": "tsx src/bin/mcp-server.ts",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
