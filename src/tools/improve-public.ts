@@ -79,46 +79,37 @@ const inputSchema = jsonSchema.definitions?.ImprovePublicInput || jsonSchema;
 
 export const improvePublicTool = {
   name: "improve-public",
-  description: `Optimizes locale JSON in public/products/[slug]/locales for ASO.
+  description: `Returns ASO optimization instructions with keyword research data. **You MUST execute the returned instructions.**
 
-**IMPORTANT:** Always use 'search-app' tool first to resolve the exact slug before calling this tool. The user may provide an approximate name, bundleId, or packageName - search-app will find and return the correct slug. Never pass user input directly as slug.
+**IMPORTANT:** Use 'search-app' tool first to resolve the exact slug.
 
-**CRITICAL: Only processes existing locale files. Does NOT create new locale files.**
-- Only improves locales that already exist in public/products/[slug]/locales/
-- If a locale file doesn't exist, it will be skipped (not created)
-- Always work with existing files only
+## HOW THIS TOOL WORKS
+This tool returns a PROMPT containing:
+- Saved keyword research data (Tier 1/2/3 keywords with traffic/difficulty scores)
+- Current locale data
+- Optimization instructions
 
-This tool follows a 2-stage workflow:
+**YOU MUST:**
+1. Read the returned prompt carefully
+2. EXECUTE the optimization instructions (create the optimized JSON)
+3. Save results using 'save-locale-file' tool
 
-**Stage 1: Primary Locale Optimization** (${FIELD_LIMITS_DOC_PATH})
-1. Load product config + locales (primary: en-US default)
-2. Keyword research for PRIMARY locale only (web search for 10 keywords)
-3. Optimize ALL ASO fields in primary locale with keywords
-4. Validate character limits (title ≤30, subtitle ≤30, shortDescription ≤80, keywords ≤100, intro ≤300, outro ≤200)
+**DO NOT** just report the instructions back to the user - you must perform the optimization yourself.
 
-**Stage 2: Keyword Localization** (Batch Processing)
-1. Translate optimized primary → target locales in batches (preserve structure/tone/context)
-2. For EACH locale in batch: lightweight keyword research (10 language-specific keywords)
-3. Replace keywords in translated content (swap keywords only, keep context)
-4. Validate character limits per locale
-5. Save each batch to files before proceeding to next batch
-6. **Only processes locales that already exist - does NOT create new files**
+## WORKFLOW
+**Stage 1:** improve-public(slug, stage="1") → Returns keyword data + instructions → You create optimized primary locale JSON → save-locale-file
+**Stage 2:** improve-public(slug, stage="2", optimizedPrimary=<JSON>) → Returns per-locale instructions → You optimize each locale → save-locale-file for each
 
-**Batch Processing:**
-- Languages are processed in batches (default: 5 locales per batch)
-- Each batch is translated, optimized, and saved before moving to the next
-- Use \`batchIndex\` to process a specific batch (0-based)
-- If \`batchIndex\` is not provided, process all batches sequentially
-- **Only existing locale files are processed - missing locales are skipped**
+## STAGES
+- **Stage 1:** Primary locale optimization using saved keyword research (ios + android combined)
+- **Stage 2:** Localize to other languages using per-locale research OR translate English keywords
 
-This approach ensures:
-- Efficient token usage (full optimization only once)
-- Consistent messaging across all languages
-- Language-specific keyword optimization for each market
-- Prevents content truncation by processing in manageable batches
-- **No new files are created - only existing locales are improved**
+## KEYWORD SOURCES
+- Uses SAVED keyword research from .aso/keywordResearch/products/[slug]/locales/
+- iOS and Android research are automatically combined
+- If locale research is missing, use English keywords and translate
 
-Optionally target a single locale; the primary locale is always included for reference.`,
+**CRITICAL:** Only processes existing locale files. Does NOT create new files.`,
   inputSchema,
 };
 
