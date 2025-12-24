@@ -234,7 +234,7 @@ export const publicToAsoTool = {
   name: "public-to-aso",
   description: `Prepares ASO data from public/products/[slug]/ to pushData format.
 
-**IMPORTANT:** The 'slug' parameter is REQUIRED. If the user does not provide a slug, you MUST ask them to provide it. This tool processes only ONE product at a time.
+**IMPORTANT:** Always use 'search-app' tool first to resolve the exact slug before calling this tool. The user may provide an approximate name, bundleId, or packageName - search-app will find and return the correct slug. Never pass user input directly as slug.
 
 This tool:
 1. Loads ASO data from public/products/[slug]/config.json + locales/

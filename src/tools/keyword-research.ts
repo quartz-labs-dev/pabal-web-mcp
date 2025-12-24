@@ -7,10 +7,9 @@ import {
   loadProductLocales,
   resolvePrimaryLocale,
 } from "./utils/improve-public/load-product-locales.util.js";
-import {
-  findRegisteredApp,
-  getSupportedLocalesForSlug,
-} from "../utils/registered-apps.util.js";
+import { getSupportedLocalesForSlug } from "../utils/registered-apps.util.js";
+import { handleSearchApp } from "./search-app.js";
+import type { RegisteredApp } from "../utils/registered-apps.util.js";
 
 const TOOL_NAME = "keyword-research";
 
@@ -81,6 +80,8 @@ const inputSchema = jsonSchema.definitions?.KeywordResearchInput || jsonSchema;
 export const keywordResearchTool = {
   name: TOOL_NAME,
   description: `Prep + persist keyword research ahead of improve-public using mcp-appstore outputs.
+
+**IMPORTANT:** Always use 'search-app' tool first to resolve the exact slug before calling this tool. The user may provide an approximate name, bundleId, or packageName - search-app will find and return the correct slug. Never pass user input directly as slug.
 
 Run this before improve-public. It gives a concrete MCP-powered research plan and a storage path under .aso/keywordResearch/products/[slug]/locales/[locale]/. Optionally writes a template or saves raw JSON from mcp-appstore tools.`,
   inputSchema,
@@ -197,10 +198,14 @@ export async function handleKeywordResearch(
     researchDataPath,
   } = input;
 
+  // Use search-app to find the registered app (supports partial matching)
+  const searchResult = await handleSearchApp({ query: slug, store: "all" });
+  const registeredApps: RegisteredApp[] = searchResult._meta?.apps || [];
+  const registeredApp = registeredApps.length > 0 ? registeredApps[0] : undefined;
+
   const { config, locales } = loadProductLocales(slug);
   const primaryLocale = resolvePrimaryLocale(config, locales);
   const primaryLocaleData = locales[primaryLocale];
-  const { app: registeredApp, path: registeredPath } = findRegisteredApp(slug);
   const { supportedLocales, path: supportedPath } =
     getSupportedLocalesForSlug(slug, platform);
 

@@ -37,6 +37,11 @@ import {
   keywordResearchInputSchema,
   handleKeywordResearch,
 } from "./keyword-research.js";
+import {
+  searchAppTool,
+  searchAppInputSchema,
+  handleSearchApp,
+} from "./search-app.js";
 import type { z } from "zod";
 
 export interface ToolInfo {
@@ -100,6 +105,14 @@ export const tools: ToolInfo[] = [
     handler: handleKeywordResearch,
     category: "ASO Research",
   },
+  {
+    name: searchAppTool.name,
+    description: searchAppTool.description,
+    inputSchema: searchAppTool.inputSchema,
+    zodSchema: searchAppInputSchema,
+    handler: handleSearchApp,
+    category: "App Management",
+  },
 ];
 
 /**
@@ -113,6 +126,7 @@ export function getToolDefinitions() {
     initProjectTool,
     createBlogHtmlTool,
     keywordResearchTool,
+    searchAppTool,
   ];
 }
 

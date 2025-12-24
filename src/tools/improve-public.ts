@@ -81,7 +81,7 @@ export const improvePublicTool = {
   name: "improve-public",
   description: `Optimizes locale JSON in public/products/[slug]/locales for ASO.
 
-**IMPORTANT:** The 'slug' parameter is REQUIRED. If the user does not provide a slug, you MUST ask them to provide it. This tool processes only ONE product at a time.
+**IMPORTANT:** Always use 'search-app' tool first to resolve the exact slug before calling this tool. The user may provide an approximate name, bundleId, or packageName - search-app will find and return the correct slug. Never pass user input directly as slug.
 
 **CRITICAL: Only processes existing locale files. Does NOT create new locale files.**
 - Only improves locales that already exist in public/products/[slug]/locales/
