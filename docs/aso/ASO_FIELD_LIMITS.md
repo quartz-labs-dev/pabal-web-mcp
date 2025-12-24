@@ -33,3 +33,4 @@ Hard limits and gotchas for all text fields we upload to each store. Character c
 2. Keywords: App Store only, unique values, comma-separated, ≤100 chars
 3. Store rules: banned phrases, emoji/symbol abuse, excessive repetition
 4. Localization: translated to target language; keep the app name un-translated
+5. Invalid characters: remove control/zero-width/BOM/hidden chars (incl. variation selectors like U+FE0E/U+FE0F) and emojis that can trigger `ENTITY_ERROR.ATTRIBUTE.INVALID.INVALID_CHARACTERS`
