@@ -185,16 +185,39 @@ export function generateKeywordLocalizationPrompt(
   prompt += `## Optimized Primary (Reference)\n\n`;
   prompt += `Use this as the base structure/messaging:\n\`\`\`json\n${optimizedPrimary}\n\`\`\`\n\n`;
 
+  // Get primary locale research for fallback
+  const primaryResearchSections = keywordResearchByLocale[primaryLocale] || [];
+  const hasPrimaryResearch = primaryResearchSections.length > 0;
+
   prompt += `## Keyword Research (Per Locale)\n\n`;
+  if (hasPrimaryResearch) {
+    prompt += `**📚 ENGLISH (${primaryLocale}) Keywords - Use as fallback for locales without research:**\n${primaryResearchSections.join("\n")}\n\n`;
+    prompt += `---\n\n`;
+  }
+
   nonPrimaryLocales.forEach((loc) => {
     const researchSections = keywordResearchByLocale[loc] || [];
     const researchDir = keywordResearchDirByLocale[loc];
     if (researchSections.length > 0) {
-      prompt += `Locale ${loc}: use saved research below. Do NOT invent keywords.\n${researchSections.join(
+      prompt += `### Locale ${loc}: ✅ Saved research found\n${researchSections.join(
         "\n"
       )}\n\n`;
+    } else if (hasPrimaryResearch) {
+      prompt += `### Locale ${loc}: ⚠️ No saved research - USE ENGLISH (${primaryLocale}) KEYWORDS\n`;
+      prompt += `No keyword research found at ${researchDir}.\n`;
+      prompt += `**FALLBACK:** Translate English keywords from primary locale (${primaryLocale}) into ${loc}:\n`;
+      prompt += `1. Take the Tier 1/2/3 keywords from English research above\n`;
+      prompt += `2. Translate each English keyword naturally into ${loc} (not literal translation)\n`;
+      prompt += `3. Use native expressions that ${loc} users would actually search for\n`;
+      prompt += `4. Verify translations are culturally appropriate\n`;
+      prompt += `5. Apply translated keywords following the same tier strategy\n\n`;
     } else {
-      prompt += `Locale ${loc}: no saved keyword research found at ${researchDir}. Stop and request running 'keyword-research' tool (slug='${slug}', locale='${loc}', platform/country as appropriate—match the store locale), then rerun stage 2.\n\n`;
+      prompt += `### Locale ${loc}: ⚠️ No research - USE ENGLISH KEYWORDS FROM optimizedPrimary\n`;
+      prompt += `No keyword research found. Extract keywords from the optimizedPrimary JSON above and translate them:\n`;
+      prompt += `1. Extract keywords from \`aso.keywords\` in optimizedPrimary\n`;
+      prompt += `2. Translate each English keyword naturally into ${loc}\n`;
+      prompt += `3. Use native expressions that ${loc} users would actually search for\n`;
+      prompt += `4. Apply translated keywords to all ASO fields\n\n`;
     }
   });
 
@@ -240,7 +263,7 @@ export function generateKeywordLocalizationPrompt(
 
   prompt += `## Workflow\n\n`;
   prompt += `Process EACH locale in this batch sequentially:\n`;
-  prompt += `1. Use saved keyword research (or pause if missing and request keyword-research run)\n`;
+  prompt += `1. Use saved keyword research OR translate from primary locale if missing (see fallback strategy above)\n`;
   prompt += `2. Replace keywords in ALL fields:\n`;
   prompt += `   - \`aso.keywords\` array\n`;
   prompt += `   - \`aso.title\`, \`aso.subtitle\`, \`aso.shortDescription\`\n`;
@@ -271,9 +294,10 @@ export function generateKeywordLocalizationPrompt(
   prompt += `## Output Format (Per Locale)\n\n`;
   prompt += `For EACH locale, provide:\n\n`;
   prompt += `### Locale [locale-code]:\n\n`;
-  prompt += `**1. Keyword Research (saved)**\n`;
-  prompt += `   - Cite file(s) used; list selected top 10 keywords (no new research)\n`;
-  prompt += `   - Rationale: why these were chosen from saved research\n\n`;
+  prompt += `**1. Keyword Source**\n`;
+  prompt += `   - If saved research exists: Cite file(s) used; list selected top 10 keywords\n`;
+  prompt += `   - If using fallback: List translated keywords from primary locale with translation rationale\n`;
+  prompt += `   - Show final 10 keywords in target language with tier assignments\n\n`;
   prompt += `**2. Updated JSON** (complete locale structure with keyword replacements)\n`;
   prompt += `   - MUST include complete \`aso\` object\n`;
   prompt += `   - MUST include complete \`landing\` object with ALL sections:\n`;
