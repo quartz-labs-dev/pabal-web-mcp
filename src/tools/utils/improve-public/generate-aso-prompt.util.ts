@@ -193,7 +193,7 @@ export function generateKeywordLocalizationPrompt(
   prompt += `## Keyword Research (Per Locale)\n\n`;
   prompt += `When both iOS and Android research exist for a locale, treat iOS keywords as primary; use Android keywords only if space remains after fitting iOS keywords within character limits.\n\n`;
   if (hasPrimaryResearch) {
-    prompt += `**📚 ENGLISH (${primaryLocale}) Keywords - Use as fallback for locales without research:**\n${primaryResearchSections.join("\n")}\n\n`;
+    prompt += `**📚 ENGLISH (${primaryLocale}) Keywords - Use as fallback for locales without research (MUST TRANSLATE to target language):**\n${primaryResearchSections.join("\n")}\n\n`;
     prompt += `---\n\n`;
   }
 
@@ -205,21 +205,24 @@ export function generateKeywordLocalizationPrompt(
         "\n"
       )}\n\n`;
     } else if (hasPrimaryResearch) {
-      prompt += `### Locale ${loc}: ⚠️ No saved research - USE ENGLISH (${primaryLocale}) KEYWORDS\n`;
+      prompt += `### Locale ${loc}: ⚠️ No saved research - TRANSLATE ENGLISH KEYWORDS TO ${loc.toUpperCase()}\n`;
       prompt += `No keyword research found at ${researchDir}.\n`;
-      prompt += `**FALLBACK:** Translate English keywords from primary locale (${primaryLocale}) into ${loc}:\n`;
-      prompt += `1. Take the Tier 1/2/3 keywords from English research above\n`;
-      prompt += `2. Translate each English keyword naturally into ${loc} (not literal translation)\n`;
-      prompt += `3. Use native expressions that ${loc} users would actually search for\n`;
-      prompt += `4. Verify translations are culturally appropriate\n`;
-      prompt += `5. Apply translated keywords following the same tier strategy\n\n`;
+      prompt += `**CRITICAL FALLBACK STRATEGY:** You MUST translate English keywords from primary locale (${primaryLocale}) into ${loc}. DO NOT use English keywords directly.\n\n`;
+      prompt += `**Translation Steps:**\n`;
+      prompt += `1. Take the Tier 1/2/3 keywords from English research above (${primaryLocale})\n`;
+      prompt += `2. **TRANSLATE each English keyword into ${loc}** - use natural, native expressions (NOT literal word-for-word translation)\n`;
+      prompt += `3. Ensure translated keywords are what ${loc} users would actually search for in their language\n`;
+      prompt += `4. Verify translations are culturally appropriate and contextually relevant\n`;
+      prompt += `5. Apply the **TRANSLATED** keywords (in ${loc} language) following the same tier strategy\n`;
+      prompt += `6. **DO NOT use English keywords in ${loc} locale** - all keywords must be in ${loc} language\n\n`;
     } else {
-      prompt += `### Locale ${loc}: ⚠️ No research - USE ENGLISH KEYWORDS FROM optimizedPrimary\n`;
-      prompt += `No keyword research found. Extract keywords from the optimizedPrimary JSON above and translate them:\n`;
-      prompt += `1. Extract keywords from \`aso.keywords\` in optimizedPrimary\n`;
-      prompt += `2. Translate each English keyword naturally into ${loc}\n`;
-      prompt += `3. Use native expressions that ${loc} users would actually search for\n`;
-      prompt += `4. Apply translated keywords to all ASO fields\n\n`;
+      prompt += `### Locale ${loc}: ⚠️ No research - TRANSLATE ENGLISH KEYWORDS FROM optimizedPrimary TO ${loc.toUpperCase()}\n`;
+      prompt += `No keyword research found. Extract keywords from the optimizedPrimary JSON above and **TRANSLATE them to ${loc}**:\n`;
+      prompt += `1. Extract keywords from \`aso.keywords\` in optimizedPrimary (these are in English/${primaryLocale})\n`;
+      prompt += `2. **TRANSLATE each English keyword naturally into ${loc}** - use native search expressions\n`;
+      prompt += `3. Ensure translated keywords match what ${loc} users would actually search for\n`;
+      prompt += `4. Apply the **TRANSLATED** keywords (in ${loc} language) to all ASO fields\n`;
+      prompt += `5. **DO NOT use English keywords in ${loc} locale** - all keywords must be translated to ${loc}\n\n`;
     }
   });
 
@@ -266,8 +269,8 @@ export function generateKeywordLocalizationPrompt(
 
   prompt += `## Workflow\n\n`;
   prompt += `Process EACH locale in this batch sequentially:\n`;
-  prompt += `1. Use saved keyword research OR translate from primary locale if missing (see fallback strategy above)\n`;
-  prompt += `2. Replace keywords in ALL fields:\n`;
+  prompt += `1. Use saved keyword research (in target language) OR **TRANSLATE English keywords from primary locale** if missing (see fallback strategy above - MUST translate, not use English directly)\n`;
+  prompt += `2. Replace keywords in ALL fields (use translated keywords in target language):\n`;
   prompt += `   - \`aso.keywords\` array\n`;
   prompt += `   - \`aso.title\`, \`aso.subtitle\`, \`aso.shortDescription\`\n`;
   prompt += `   - \`aso.template.intro\`, \`aso.template.outro\`\n`;
@@ -298,9 +301,9 @@ export function generateKeywordLocalizationPrompt(
   prompt += `For EACH locale, provide:\n\n`;
   prompt += `### Locale [locale-code]:\n\n`;
   prompt += `**1. Keyword Source**\n`;
-  prompt += `   - If saved research exists: Cite file(s) used; list selected top 10 keywords\n`;
-  prompt += `   - If using fallback: List translated keywords from primary locale with translation rationale\n`;
-  prompt += `   - Show final 10 keywords in target language with tier assignments\n\n`;
+  prompt += `   - If saved research exists: Cite file(s) used; list selected top 10 keywords (in target language)\n`;
+  prompt += `   - If using fallback: List **TRANSLATED** keywords from primary locale (English → target language) with translation rationale\n`;
+  prompt += `   - Show final 10 keywords **IN TARGET LANGUAGE** with tier assignments - DO NOT show English keywords\n\n`;
   prompt += `**2. Updated JSON** (complete locale structure with keyword replacements)\n`;
   prompt += `   - MUST include complete \`aso\` object\n`;
   prompt += `   - MUST include complete \`landing\` object with ALL sections:\n`;
