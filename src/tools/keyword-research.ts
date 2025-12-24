@@ -117,17 +117,33 @@ function buildTemplate({
     },
     plan: {
       steps: [
-        "Start mcp-appstore server (node server.js in external-tools/mcp-appstore).",
-        "Confirm app IDs/locales: get_app_details(appId from config/registered-apps) to lock country/lang and 3–5 competitors.",
-        "Discover competitors: search_app(term=seed keyword, num=10–20), get_similar_apps(appId=top competitor, num=10).",
-        "Collect candidates (all of these, num=20–30): suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search; suggest_keywords_by_apps(apps=[top competitors]).",
-        "Score shortlist: get_keyword_scores for 15–30 candidates per platform/country.",
-        "Context check: analyze_reviews (num=100–200) and fetch_reviews (num=50–100) on top apps for language/tone cues.",
-        "If keywordSuggestions/similar/reviews are sparse, rerun calls (add more competitors/seeds) until you have 10–15 strong keywords.",
-        "For any recommended keyword without scores, rerun get_keyword_scores to fill traffic/difficulty.",
+        "1. SETUP: Start mcp-appstore server (node server.js in external-tools/mcp-appstore).",
+        "2. APP IDENTITY: get_app_details(appId) → confirm exact app name, category, current keywords, and store listing quality.",
+        "3. COMPETITOR DISCOVERY: search_app(term=seed, num=15) + get_similar_apps(appId=your app, num=20) → identify 5-10 direct competitors (same category, similar size) + 3-5 aspirational competitors (top performers).",
+        "4. COMPETITOR KEYWORD MINING: For top 5 competitors, run suggest_keywords_by_apps → extract keywords they rank for but you don't.",
+        "5. KEYWORD EXPANSION (run ALL, num=30 each): suggest_keywords_by_seeds (your app name + core features), by_category (your primary category), by_similarity (semantic variations), by_competition (gap analysis), by_search (autocomplete/trending).",
+        "6. KEYWORD SCORING: get_keyword_scores for ALL candidates (50-100 keywords) → filter by: traffic ≥10, difficulty ≤70, relevance to your app.",
+        "7. REVIEW INTELLIGENCE: analyze_reviews(num=200) + fetch_reviews(num=100) on top 3 competitors → extract: user pain points, feature requests, emotional language, native phrases users actually use.",
+        "8. KEYWORD CATEGORIZATION: Group into tiers - Tier1 (3-5): high traffic (≥1000), high relevance, moderate difficulty (≤50); Tier2 (5-7): medium traffic (100-1000), exact feature match; Tier3 (5-8): longtail (<100 traffic), very low difficulty (≤30), high conversion intent.",
+        "9. LOCALIZATION CHECK: Verify keywords are natural in target locale - avoid direct translations, prefer native expressions found in reviews.",
+        "10. GAP ANALYSIS: Compare your current keywords vs competitor keywords → identify missed opportunities and over-saturated terms to avoid.",
+        "11. VALIDATION: For final 15-20 keywords, ensure each has: score data, clear user intent, natural locale fit, and specific rationale for inclusion.",
         "Keep rationale/nextActions in English by default unless you intentionally localize them."
       ],
-      note: "Run per platform/country. Save raw tool outputs plus curated top keywords (target 10–15 per locale: 2–3 high-traffic core, 4–6 mid-competition, 4–6 longtail).",
+      selectionCriteria: {
+        tier1_core: "High traffic (≥1000), relevance score ≥0.8, difficulty ≤50, brand-safe",
+        tier2_feature: "Medium traffic (100-1000), exact feature/benefit match, difficulty ≤60",
+        tier3_longtail: "Low traffic (<100), very low difficulty (≤30), high purchase/download intent phrases",
+        avoid: "Generic terms (difficulty ≥80), irrelevant categories, competitor brand names, terms with no search volume"
+      },
+      qualityChecks: [
+        "Each keyword has traffic + difficulty scores (no gaps)",
+        "Mix of 3 tiers represented (not all longtail, not all high-competition)",
+        "Keywords validated against actual user language from reviews",
+        "No duplicate semantic meanings (e.g., 'photo edit' and 'edit photo')",
+        "Locale-appropriate phrasing verified"
+      ],
+      note: "Run per platform/country. Target 15-20 keywords per locale with clear tier distribution. Save ALL raw data for audit trail.",
     },
     data: {
       raw: {
@@ -148,9 +164,27 @@ function buildTemplate({
       },
       summary: {
         recommendedKeywords: [],
+        keywordsByTier: {
+          tier1_core: [],
+          tier2_feature: [],
+          tier3_longtail: [],
+        },
+        competitorInsights: {
+          topCompetitors: [],
+          keywordGaps: [],
+          userLanguagePatterns: [],
+        },
         rationale: "",
-        nextActions:
-          "Feed 10–15 mixed keywords (core/mid/longtail) into improve-public Stage 1.",
+        confidence: {
+          dataQuality: "",
+          localeRelevance: "",
+          competitivePosition: "",
+        },
+        nextActions: [
+          "Feed tiered keywords into improve-public Stage 1 (prioritize Tier1 for title, Tier2-3 for keyword field)",
+          "Monitor keyword rankings post-update",
+          "Re-run research quarterly or after major competitor changes",
+        ],
       },
     },
   };
@@ -376,34 +410,72 @@ export async function handleKeywordResearch(
     }`
   );
   lines.push("");
-  lines.push("How to run (uses mcp-appstore):");
+  lines.push("## Research Workflow (mcp-appstore)");
+  lines.push("");
+  lines.push("### Phase 1: Setup & Discovery");
   lines.push(
-    `1) Start the local mcp-appstore server for this run: node server.js (cwd: /ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore). LLM should start it before calling tools and stop it after, if the client supports process management; otherwise, start/stop manually.`
+    `1) Start mcp-appstore server: node server.js (cwd: external-tools/mcp-appstore)`
   );
   lines.push(
-    `2) Confirm IDs/locales: get_app_details(appId from config/registered-apps) to lock locale/country and competitor list.`
+    `2) get_app_details(appId) → confirm app identity, category, current metadata`
   );
   lines.push(
-    `3) Discover apps: search_app(term=seed, num=10-20, platform=${platform}, country=${resolvedCountry}); get_similar_apps(appId=top competitor, num=10).`
+    `3) search_app(term=seed, num=15, platform=${platform}, country=${resolvedCountry}) → find direct competitors`
   );
   lines.push(
-    `4) Expand keywords (num=20-30 each): suggest_keywords_by_seeds/by_category/by_similarity/by_competition/by_search + suggest_keywords_by_apps(apps=[top competitors]).`
+    `4) get_similar_apps(appId=your app, num=20) → discover related apps in your space`
+  );
+  lines.push("");
+  lines.push("### Phase 2: Keyword Mining (run ALL of these)");
+  lines.push(
+    `5) suggest_keywords_by_apps(apps=[top 5 competitors]) → steal competitor keywords`
   );
   lines.push(
-    `5) Score shortlist: get_keyword_scores for 15–30 candidates (note: scores are heuristic per README).`
+    `6) suggest_keywords_by_seeds(seeds=[app name, core features], num=30)`
   );
   lines.push(
-    `6) Context check: analyze_reviews (num=100-200) and fetch_reviews (num=50-100) on top apps to harvest native phrasing; keep snippets for improve-public.`
+    `7) suggest_keywords_by_category(category=your primary category, num=30)`
   );
   lines.push(
-    `7) Save all raw responses + your final 10–15 keywords (mix of core/high-traffic, mid, longtail) to: ${outputPath} (structure mirrors .aso/pullData/.aso/pushData under products/<slug>/locales/<locale>)`
+    `8) suggest_keywords_by_similarity + by_competition + by_search (num=30 each)`
+  );
+  lines.push("");
+  lines.push("### Phase 3: Scoring & Filtering");
+  lines.push(
+    `9) get_keyword_scores for ALL candidates (50-100 keywords) → get traffic & difficulty`
   );
   lines.push(
-    `8) If keywordSuggestions/similarApps/reviews are still empty or <10 solid candidates, add more competitors/seeds and rerun the calls above until you reach 10–15 strong keywords.`
+    `10) Filter: traffic ≥10, difficulty ≤70, relevant to your app's core value`
+  );
+  lines.push("");
+  lines.push("### Phase 4: User Language Intelligence");
+  lines.push(
+    `11) analyze_reviews(appId=top 3 competitors, num=200) → sentiment & themes`
   );
   lines.push(
-    `9) If any recommended keywords lack scores, rerun get_keyword_scores for those items. Keep rationale/nextActions in English by default unless you explicitly want them localized.`
+    `12) fetch_reviews(appId=top 3 competitors, num=100) → extract exact phrases users say`
   );
+  lines.push(
+    `13) Cross-reference keywords with review language → validate natural phrasing`
+  );
+  lines.push("");
+  lines.push("### Phase 5: Final Selection");
+  lines.push(
+    `14) Categorize into tiers: Tier1 (3-5 high-traffic core), Tier2 (5-7 feature-match), Tier3 (5-8 longtail)`
+  );
+  lines.push(
+    `15) Validate each keyword has: score, intent, locale fit, inclusion rationale`
+  );
+  lines.push(
+    `16) Save to: ${outputPath}`
+  );
+  lines.push("");
+  lines.push("### Quality Checklist");
+  lines.push("- [ ] 15-20 keywords with complete score data");
+  lines.push("- [ ] All 3 tiers represented (not just longtail)");
+  lines.push("- [ ] Keywords validated against actual review language");
+  lines.push("- [ ] No semantic duplicates");
+  lines.push("- [ ] Locale-appropriate (not direct translations)");
   if (fileAction) {
     lines.push(`File: ${fileAction} at ${outputPath}`);
   } else {
