@@ -83,6 +83,10 @@ export const keywordResearchTool = {
 
 **IMPORTANT:** Always use 'search-app' tool first to resolve the exact slug before calling this tool. The user may provide an approximate name, bundleId, or packageName - search-app will find and return the correct slug. Never pass user input directly as slug.
 
+**Locale coverage:** If the product ships multiple locales, run this tool SEPARATELY for EVERY locale (including non-primary markets). Do NOT rely on "template-only" coverage for secondary locales—produce a full keyword research file per locale.
+
+**Platform coverage:** Use search-app results to confirm supported platforms/locales (App Store + Google Play). Run this tool for EVERY supported platform/locale combination—ios + android runs are separate.
+
 Run this before improve-public. It gives a concrete MCP-powered research plan and a storage path under .aso/keywordResearch/products/[slug]/locales/[locale]/. Optionally writes a template or saves raw JSON from mcp-appstore tools.`,
   inputSchema,
 };
@@ -239,9 +243,17 @@ export async function handleKeywordResearch(
 
   const { config, locales } = loadProductLocales(slug);
   const primaryLocale = resolvePrimaryLocale(config, locales);
+  const productLocales = Object.keys(locales);
+  const remainingLocales = productLocales.filter((loc) => loc !== locale);
   const primaryLocaleData = locales[primaryLocale];
   const { supportedLocales, path: supportedPath } =
     getSupportedLocalesForSlug(slug, platform);
+  const appStoreLocales = registeredApp?.appStore?.supportedLocales || [];
+  const googlePlayLocales = registeredApp?.googlePlay?.supportedLocales || [];
+  const declaredPlatforms = [
+    registeredApp?.appStore ? "ios" : null,
+    registeredApp?.googlePlay ? "android" : null,
+  ].filter(Boolean) as string[];
 
   // Derive auto seeds/competitors if not provided
   const autoSeeds: string[] = [];
@@ -377,6 +389,17 @@ export async function handleKeywordResearch(
   lines.push(`# Keyword research plan (${slug})`);
   lines.push(`Locale: ${locale} | Platform: ${platform} | Country: ${resolvedCountry}`);
   lines.push(`Primary locale detected: ${primaryLocale}`);
+  if (declaredPlatforms.length > 0) {
+    lines.push(`Supported platforms (search-app): ${declaredPlatforms.join(", ")}`);
+  } else {
+    lines.push("Supported platforms (search-app): none detected—update registered-apps.json");
+  }
+  if (appStoreLocales.length > 0) {
+    lines.push(`Declared App Store locales: ${appStoreLocales.join(", ")}`);
+  }
+  if (googlePlayLocales.length > 0) {
+    lines.push(`Declared Google Play locales: ${googlePlayLocales.join(", ")}`);
+  }
   if (supportedLocales.length > 0) {
     lines.push(
       `Registered supported locales (${platform}): ${supportedLocales.join(
@@ -392,6 +415,24 @@ export async function handleKeywordResearch(
     lines.push(
       `Registered supported locales not found for ${platform} (checked: ${supportedPath}).`
     );
+  }
+  if (productLocales.length > 0) {
+    lines.push(
+      `Existing product locales (${productLocales.length}): ${productLocales.join(", ")}`
+    );
+    lines.push(
+      "MANDATORY: Run FULL keyword research (mcp-appstore workflow) for EVERY locale above—no template-only coverage for secondary markets."
+    );
+    if (remainingLocales.length > 0) {
+      lines.push(
+        `After finishing ${locale}, immediately queue runs for: ${remainingLocales.join(", ")}`
+      );
+    }
+    if (declaredPlatforms.length > 1) {
+      lines.push(
+        "Also run separate FULL keyword research for each supported platform (e.g., ios + android) across all locales."
+      );
+    }
   }
   lines.push(
     `Seeds: ${
@@ -478,9 +519,14 @@ export async function handleKeywordResearch(
   lines.push("- [ ] Locale-appropriate (not direct translations)");
   if (fileAction) {
     lines.push(`File: ${fileAction} at ${outputPath}`);
+    if (writeTemplate && !researchData && !researchDataPath) {
+      lines.push(
+        "⚠️ Template is a placeholder—replace with FULL mcp-appstore research results for this locale (no template-only coverage)."
+      );
+    }
   } else {
     lines.push(
-      `Tip: set writeTemplate=true to create the JSON skeleton at ${outputPath}`
+      `Tip: set writeTemplate=true to create the JSON skeleton at ${outputPath} (still run full research per locale)`
     );
   }
   lines.push("");
