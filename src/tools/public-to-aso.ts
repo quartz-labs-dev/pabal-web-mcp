@@ -29,6 +29,19 @@ import { getPushDataDir, getProductsDir } from "../utils/config.util.js";
 import fs from "node:fs";
 
 const FIELD_LIMITS_DOC_PATH = "docs/aso/ASO_FIELD_LIMITS.md";
+const APP_STORE_LIMITS = {
+  name: 30,
+  subtitle: 30,
+  keywords: 100,
+  promotionalText: 170,
+  description: 4000,
+  whatsNew: 4000,
+};
+const GOOGLE_PLAY_LIMITS = {
+  title: 50,
+  shortDescription: 80,
+  fullDescription: 4000,
+};
 
 const toJsonSchema: (
   schema: z.ZodTypeAny,
@@ -63,6 +76,62 @@ const jsonSchema = toJsonSchema(publicToAsoInputSchema, {
 });
 
 const inputSchema = jsonSchema.definitions?.PublicToAsoInput || jsonSchema;
+
+function validateFieldLimits(configData: AsoData): string[] {
+  const issues: string[] = [];
+
+  if (configData.appStore) {
+    const appStoreData = configData.appStore;
+    const locales = isAppStoreMultilingual(appStoreData)
+      ? appStoreData.locales
+      : { [appStoreData.locale || DEFAULT_LOCALE]: appStoreData };
+
+    for (const [locale, data] of Object.entries(locales)) {
+      const { name, subtitle, keywords, promotionalText, description, whatsNew } =
+        data;
+      const push = (field: string, value: string | undefined, limit: number) => {
+        if (typeof value === "string" && value.length > limit) {
+          issues.push(
+            `App Store [${locale}].${field}: ${value.length}/${limit}`
+          );
+        }
+      };
+      push("name", name, APP_STORE_LIMITS.name);
+      push("subtitle", subtitle, APP_STORE_LIMITS.subtitle);
+      push("keywords", keywords, APP_STORE_LIMITS.keywords);
+      push("promotionalText", promotionalText, APP_STORE_LIMITS.promotionalText);
+      push("description", description, APP_STORE_LIMITS.description);
+      push("whatsNew", whatsNew, APP_STORE_LIMITS.whatsNew);
+    }
+  }
+
+  if (configData.googlePlay) {
+    const googlePlayData = configData.googlePlay;
+    const locales = isGooglePlayMultilingual(googlePlayData)
+      ? googlePlayData.locales
+      : { [googlePlayData.defaultLanguage || DEFAULT_LOCALE]: googlePlayData };
+
+    for (const [locale, data] of Object.entries(locales)) {
+      const { title, shortDescription, fullDescription } = data;
+      const push = (field: string, value: string | undefined, limit: number) => {
+        if (typeof value === "string" && value.length > limit) {
+          issues.push(
+            `Google Play [${locale}].${field}: ${value.length}/${limit}`
+          );
+        }
+      };
+      push("title", title, GOOGLE_PLAY_LIMITS.title);
+      push(
+        "shortDescription",
+        shortDescription,
+        GOOGLE_PLAY_LIMITS.shortDescription
+      );
+      push("fullDescription", fullDescription, GOOGLE_PLAY_LIMITS.fullDescription);
+    }
+  }
+
+  return issues;
+}
 
 /**
  * Download/copy screenshots to pushData directory
@@ -241,6 +310,7 @@ This tool:
 2. Converts to store-compatible format (removes screenshots from metadata, sets contactWebsite/marketingUrl)
 3. Saves metadata to .aso/pushData/products/[slug]/store/ (path from ~/.config/pabal-mcp/config.json dataDir)
 4. Copies/downloads screenshots to .aso/pushData/products/[slug]/store/screenshots/
+5. Validates text field lengths against ${FIELD_LIMITS_DOC_PATH} (fails if over limits)
 
 Before running, review ${FIELD_LIMITS_DOC_PATH} for per-store limits. This prepares data for pushing to stores without actually uploading.`,
   inputSchema,
@@ -352,6 +422,13 @@ export async function handlePublicToAso(
 
   // Prepare data for push (remove screenshots, set contactWebsite, etc.)
   const storeData = prepareAsoDataForPush(slug, configData);
+  const validationIssues = validateFieldLimits(configData);
+  const validationMessage =
+    validationIssues.length > 0
+      ? `⚠️ Field limit issues (see ${FIELD_LIMITS_DOC_PATH}):\n- ${validationIssues.join(
+          "\n- "
+        )}`
+      : `Field limits OK (checked against ${FIELD_LIMITS_DOC_PATH})`;
 
   const pushDataRoot = getPushDataDir();
 
@@ -364,10 +441,16 @@ export async function handlePublicToAso(
             storeData,
             null,
             2
-          )}`,
+          )}\n\n${validationMessage}`,
         },
       ],
     };
+  }
+
+  if (validationIssues.length > 0) {
+    throw new Error(
+      `Field limit violations detected. Fix before pushing.\n${validationMessage}`
+    );
   }
 
   // Save metadata to pushData

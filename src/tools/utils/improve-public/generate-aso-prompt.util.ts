@@ -91,8 +91,8 @@ export function generatePrimaryOptimizationPrompt(
   prompt += `**Guidelines**: 2.5-3% keyword density, natural flow, cultural appropriateness\n`;
   prompt += `**CRITICAL**: You MUST include the complete \`landing\` object in your optimized JSON output.\n\n`;
 
-  prompt += `## Step 3: Validate\n\n`;
-  prompt += `Check all limits: title ≤30, subtitle ≤30, shortDescription ≤80, keywords ≤100, intro ≤300, outro ≤200\n`;
+  prompt += `## Step 3: Validate (after applying all keywords)\n\n`;
+  prompt += `Check all limits using ${FIELD_LIMITS_DOC_PATH}: title ≤30, subtitle ≤30, shortDescription ≤80, keywords ≤100, intro ≤300, outro ≤200\n`;
   prompt += `- Remove keyword duplicates (unique list; avoid repeating title/subtitle terms verbatim)\n`;
   prompt += `- Ensure App Store/Play Store rules from ${FIELD_LIMITS_DOC_PATH} are satisfied (no disallowed characters/formatting)\n\n`;
 
@@ -183,7 +183,7 @@ export function generateKeywordLocalizationPrompt(
   prompt += `For EACH target locale in this batch:\n`;
   prompt += `1. Use SAVED keyword research (see per-locale data below). Do NOT invent keywords.\n`;
   prompt += `2. **Replace ONLY keywords with optimized keywords** - keep ALL existing content, structure, tone, and context unchanged. Only swap keywords for better ASO keywords.\n`;
-  prompt += `3. Validate character limits + store rules (${FIELD_LIMITS_DOC_PATH}) + keyword duplication\n`;
+  prompt += `3. After all keywords are applied, validate character limits + store rules (${FIELD_LIMITS_DOC_PATH}) + keyword duplication\n`;
   prompt += `4. **SAVE the updated JSON to file** using the save-locale-file tool (only if file exists)\n\n`;
 
   prompt += `## Optimized Primary (Reference)\n\n`;
@@ -287,7 +287,7 @@ export function generateKeywordLocalizationPrompt(
   prompt += `   - \`landing.reviews.title\` and \`landing.reviews.description\`\n`;
   prompt += `   - **For each field: Replace keywords only, keep existing content structure and meaning unchanged**\n`;
   prompt += `3. **CRITICAL**: Ensure ALL landing fields are translated (not English)\n`;
-  prompt += `4. Validate limits + store rules (${FIELD_LIMITS_DOC_PATH}) + keyword duplication (unique list; avoid repeating title/subtitle terms verbatim)\n`;
+  prompt += `4. After swapping keywords, validate limits + store rules (${FIELD_LIMITS_DOC_PATH}) + keyword duplication (unique list; avoid repeating title/subtitle terms verbatim)\n`;
   prompt += `5. **SAVE the updated JSON to file** using save-locale-file tool\n`;
   prompt += `6. Move to next locale in batch\n\n`;
 
