@@ -62,6 +62,7 @@ export function generatePrimaryOptimizationPrompt(
     prompt += `No saved keyword research found at ${researchDir}.\n`;
     prompt += `**Stop and request action**: Run the 'keyword-research' tool with slug='${slug}', locale='${primaryLocale}', and the appropriate platform/country, then rerun improve-public stage 1.\n\n`;
   }
+  prompt += `**Priority:** When both iOS and Android research exist, keep iOS keywords first and only add Android keywords if there is room after meeting character limits.\n\n`;
 
   prompt += `## Step 2: Optimize All Fields (${primaryLocale})\n\n`;
   prompt += `**Apply keywords strategically based on tier priority:**\n\n`;
@@ -190,6 +191,7 @@ export function generateKeywordLocalizationPrompt(
   const hasPrimaryResearch = primaryResearchSections.length > 0;
 
   prompt += `## Keyword Research (Per Locale)\n\n`;
+  prompt += `When both iOS and Android research exist for a locale, treat iOS keywords as primary; use Android keywords only if space remains after fitting iOS keywords within character limits.\n\n`;
   if (hasPrimaryResearch) {
     prompt += `**📚 ENGLISH (${primaryLocale}) Keywords - Use as fallback for locales without research:**\n${primaryResearchSections.join("\n")}\n\n`;
     prompt += `---\n\n`;
@@ -223,6 +225,7 @@ export function generateKeywordLocalizationPrompt(
 
   prompt += `## Keyword Replacement Strategy\n\n`;
   prompt += `For EACH locale:\n`;
+  prompt += `- Priority: Keep iOS-sourced keywords first; add Android keywords only if there is remaining space after iOS keywords fit within field limits.\n`;
   prompt += `1. Take the TRANSLATED content (below)\n`;
   prompt += `2. Replace \`aso.keywords\` array with new 10 keywords\n`;
   prompt += `3. **TITLE FORMAT**: \`aso.title\` must follow **"App Name: Primary Keyword"** format:\n`;

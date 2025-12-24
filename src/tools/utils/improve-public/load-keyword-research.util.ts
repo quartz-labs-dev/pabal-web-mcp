@@ -174,6 +174,13 @@ interface MergedKeywordData {
   platforms: string[];
 }
 
+function getPlatformPriority(platform?: string): number {
+  const normalized = (platform || "").toLowerCase();
+  if (normalized === "ios") return 0;
+  if (normalized === "android") return 1;
+  return 2;
+}
+
 function mergeKeywordData(entries: KeywordResearchEntry[]): MergedKeywordData {
   const merged: MergedKeywordData = {
     tier1_core: [],
@@ -189,8 +196,13 @@ function mergeKeywordData(entries: KeywordResearchEntry[]): MergedKeywordData {
   const seenKeywords = new Set<string>();
   const seenGaps = new Set<string>();
   const seenPatterns = new Set<string>();
+  const entriesByPriority = [...entries].sort((a, b) => {
+    const aPriority = getPlatformPriority(extractMeta(a.data).platform);
+    const bPriority = getPlatformPriority(extractMeta(b.data).platform);
+    return aPriority - bPriority;
+  });
 
-  for (const entry of entries) {
+  for (const entry of entriesByPriority) {
     if (entry.data?.parseError) continue;
 
     const meta = extractMeta(entry.data);
@@ -256,8 +268,16 @@ function mergeKeywordData(entries: KeywordResearchEntry[]): MergedKeywordData {
 
 function formatMergedData(merged: MergedKeywordData, researchDir: string): string {
   const lines: string[] = [];
-  lines.push(`### Combined Keyword Research (${merged.platforms.join(" + ")})`);
+  const hasIos = merged.platforms.some(
+    (platform) => platform && platform.toLowerCase() === "ios"
+  );
+  const platformLabel =
+    merged.platforms.length > 0 ? merged.platforms.join(" + ") : "Unknown";
+  lines.push(
+    `### Combined Keyword Research (${platformLabel})${hasIos ? " — iOS prioritized" : ""}`
+  );
   lines.push(`Source: ${researchDir}`);
+  lines.push(`Priority: iOS > Android > others (use Android only after iOS keywords fit character limits)`);
 
   if (merged.tier1_core.length > 0) {
     lines.push(`\n**Tier 1 (Core - use in title/subtitle):** ${merged.tier1_core.join(", ")}`);

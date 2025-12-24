@@ -106,7 +106,7 @@ This tool returns a PROMPT containing:
 
 ## KEYWORD SOURCES
 - Uses SAVED keyword research from .aso/keywordResearch/products/[slug]/locales/
-- iOS and Android research are automatically combined
+- iOS and Android research are automatically combined (iOS prioritized; Android fills remaining slots when limits apply)
 - If locale research is missing, use English keywords and translate
 
 **CRITICAL:** Only processes existing locale files. Does NOT create new files.`,
