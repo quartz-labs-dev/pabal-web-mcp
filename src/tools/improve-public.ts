@@ -102,12 +102,12 @@ This tool returns a PROMPT containing:
 
 ## STAGES
 - **Stage 1:** Primary locale optimization using saved keyword research (ios + android combined)
-- **Stage 2:** Localize to other languages using per-locale research OR translate English keywords
+- **Stage 2:** Localize to other languages - **each locale uses its OWN keyword research**
 
-## KEYWORD SOURCES
-- Uses SAVED keyword research from .aso/keywordResearch/products/[slug]/locales/
-- iOS and Android research are automatically combined (iOS prioritized; Android fills remaining slots when limits apply)
-- If locale research is missing, use English keywords and translate
+## KEYWORD SOURCES (Per Locale)
+- **Priority 1:** Uses each locale's SAVED keyword research from .aso/keywordResearch/products/[slug]/locales/[locale]/
+- **Priority 2 (Fallback):** If locale-specific research is missing, falls back to en-US/en keywords and TRANSLATES them
+- iOS and Android research are automatically combined per locale (iOS prioritized)
 
 **CRITICAL:** Only processes existing locale files. Does NOT create new files.`,
   inputSchema,

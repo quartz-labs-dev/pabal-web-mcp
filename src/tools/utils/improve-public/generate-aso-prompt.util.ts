@@ -128,7 +128,12 @@ export function generatePrimaryOptimizationPrompt(
   prompt += `   - Store rules (${FIELD_LIMITS_DOC_PATH}): ✓/✗\n`;
   prompt += `   - Density: X% (2.5-3%) ✓/✗\n\n`;
 
-  prompt += `**Reference**: ${FIELD_LIMITS_DOC_PATH}\n`;
+  prompt += `**Reference**: ${FIELD_LIMITS_DOC_PATH}\n\n`;
+
+  prompt += `---\n\n`;
+  prompt += `## Next Step\n\n`;
+  prompt += `After saving the optimized JSON, proceed to **Stage 2** to optimize other locales:\n`;
+  prompt += `\`\`\`\nimprove-public(slug="${slug}", stage="2", optimizedPrimary=<the JSON you just created>)\n\`\`\`\n`;
 
   return prompt;
 }
@@ -193,58 +198,60 @@ export function generateKeywordLocalizationPrompt(
   prompt += `## Optimized Primary (Reference)\n\n`;
   prompt += `Use this as the base structure/messaging:\n\`\`\`json\n${optimizedPrimary}\n\`\`\`\n\n`;
 
-  // Get primary locale research for fallback
+  const { keywordResearchFallbackByLocale } = args;
+
+  // Check which locales need fallback
+  const localesNeedingFallback = nonPrimaryLocales.filter((loc) => {
+    const fallbackInfo = keywordResearchFallbackByLocale?.[loc];
+    const researchSections = keywordResearchByLocale[loc] || [];
+    return researchSections.length === 0 || fallbackInfo?.isFallback;
+  });
+
+  // Get primary locale research for fallback (only show if needed)
   const primaryResearchSections = keywordResearchByLocale[primaryLocale] || [];
   const hasPrimaryResearch = primaryResearchSections.length > 0;
 
   prompt += `## Keyword Research (Per Locale)\n\n`;
+  prompt += `**Priority:** Use each locale's own keyword research. English fallback is ONLY used when locale-specific research is missing.\n`;
   prompt += `When both iOS and Android research exist for a locale, treat iOS keywords as primary; use Android keywords only if space remains after fitting iOS keywords within character limits.\n\n`;
-  if (hasPrimaryResearch) {
-    prompt += `**📚 ENGLISH (${primaryLocale}) Keywords - Use as fallback for locales without research (MUST TRANSLATE to target language):**\n${primaryResearchSections.join("\n")}\n\n`;
+
+  // Only show English fallback section if some locales need it
+  if (hasPrimaryResearch && localesNeedingFallback.length > 0) {
+    prompt += `---\n`;
+    prompt += `**📚 ENGLISH FALLBACK (${primaryLocale})** - Only for locales without their own research: ${localesNeedingFallback.join(
+      ", "
+    )}\n`;
+    prompt += `${primaryResearchSections.join("\n")}\n\n`;
     prompt += `---\n\n`;
   }
-
-  const { keywordResearchFallbackByLocale } = args;
 
   nonPrimaryLocales.forEach((loc) => {
     const researchSections = keywordResearchByLocale[loc] || [];
     const researchDir = keywordResearchDirByLocale[loc];
     const fallbackInfo = keywordResearchFallbackByLocale?.[loc];
 
-    if (researchSections.length > 0) {
-      if (fallbackInfo?.isFallback && fallbackInfo.fallbackLocale) {
-        // Using fallback (en-US/en) keywords - already loaded with translation notice
-        prompt += `### Locale ${loc}: 🔄 Using ${fallbackInfo.fallbackLocale} keywords as fallback - MUST TRANSLATE TO ${loc.toUpperCase()}\n`;
-        prompt += researchSections.join("\n");
-        prompt += `\n\n**CRITICAL:** The keywords above are in ${fallbackInfo.fallbackLocale}. You MUST:\n`;
-        prompt += `1. **TRANSLATE each keyword into ${loc}** - use natural, native expressions\n`;
-        prompt += `2. Ensure translated keywords are what ${loc} users would actually search for\n`;
-        prompt += `3. **DO NOT use ${fallbackInfo.fallbackLocale} keywords directly** - all keywords must be in ${loc} language\n\n`;
-      } else {
-        // Locale-specific research found
-        prompt += `### Locale ${loc}: ✅ Saved research found (locale-specific)\n${researchSections.join(
-          "\n"
-        )}\n\n`;
-      }
+    if (researchSections.length > 0 && !fallbackInfo?.isFallback) {
+      // ✅ Locale-specific research found - use it directly
+      prompt += `### Locale ${loc}: ✅ Using locale-specific keyword research\n`;
+      prompt += researchSections.join("\n");
+      prompt += `\n**Use these ${loc} keywords directly** - they are already in the target language.\n\n`;
+    } else if (researchSections.length > 0 && fallbackInfo?.isFallback) {
+      // 🔄 Using fallback (en-US/en) keywords - need translation
+      prompt += `### Locale ${loc}: 🔄 No ${loc} research found - Using ${fallbackInfo.fallbackLocale} as fallback\n`;
+      prompt += researchSections.join("\n");
+      prompt += `\n**MUST TRANSLATE:** The keywords above are in ${fallbackInfo.fallbackLocale}. You MUST:\n`;
+      prompt += `1. **TRANSLATE each keyword into ${loc}** - use natural, native expressions\n`;
+      prompt += `2. Ensure translated keywords are what ${loc} users would actually search for\n`;
+      prompt += `3. **DO NOT use ${fallbackInfo.fallbackLocale} keywords directly** - all keywords must be in ${loc} language\n\n`;
     } else if (hasPrimaryResearch) {
-      prompt += `### Locale ${loc}: ⚠️ No saved research - TRANSLATE ENGLISH KEYWORDS TO ${loc.toUpperCase()}\n`;
+      // ⚠️ No research at all - use English fallback from above
+      prompt += `### Locale ${loc}: ⚠️ No research found - TRANSLATE from English fallback above\n`;
       prompt += `No keyword research found at ${researchDir}.\n`;
-      prompt += `**CRITICAL FALLBACK STRATEGY:** You MUST translate English keywords from primary locale (${primaryLocale}) into ${loc}. DO NOT use English keywords directly.\n\n`;
-      prompt += `**Translation Steps:**\n`;
-      prompt += `1. Take the Tier 1/2/3 keywords from English research above (${primaryLocale})\n`;
-      prompt += `2. **TRANSLATE each English keyword into ${loc}** - use natural, native expressions (NOT literal word-for-word translation)\n`;
-      prompt += `3. Ensure translated keywords are what ${loc} users would actually search for in their language\n`;
-      prompt += `4. Verify translations are culturally appropriate and contextually relevant\n`;
-      prompt += `5. Apply the **TRANSLATED** keywords (in ${loc} language) following the same tier strategy\n`;
-      prompt += `6. **DO NOT use English keywords in ${loc} locale** - all keywords must be in ${loc} language\n\n`;
+      prompt += `**Use the ENGLISH FALLBACK section above** and TRANSLATE all keywords to ${loc}.\n\n`;
     } else {
-      prompt += `### Locale ${loc}: ⚠️ No research - TRANSLATE ENGLISH KEYWORDS FROM optimizedPrimary TO ${loc.toUpperCase()}\n`;
-      prompt += `No keyword research found. Extract keywords from the optimizedPrimary JSON above and **TRANSLATE them to ${loc}**:\n`;
-      prompt += `1. Extract keywords from \`aso.keywords\` in optimizedPrimary (these are in English/${primaryLocale})\n`;
-      prompt += `2. **TRANSLATE each English keyword naturally into ${loc}** - use native search expressions\n`;
-      prompt += `3. Ensure translated keywords match what ${loc} users would actually search for\n`;
-      prompt += `4. Apply the **TRANSLATED** keywords (in ${loc} language) to all ASO fields\n`;
-      prompt += `5. **DO NOT use English keywords in ${loc} locale** - all keywords must be translated to ${loc}\n\n`;
+      // ❌ No research anywhere - extract from optimizedPrimary
+      prompt += `### Locale ${loc}: ❌ No research available\n`;
+      prompt += `No keyword research found. Extract keywords from \`aso.keywords\` in optimizedPrimary and **TRANSLATE them to ${loc}**.\n\n`;
     }
   });
 
@@ -319,7 +326,9 @@ export function generateKeywordLocalizationPrompt(
       }/${totalBatches})\n`;
       prompt += `3. Use the same optimizedPrimary JSON as reference\n\n`;
     } else {
-      prompt += `2. All batches completed! ✅\n\n`;
+      prompt += `2. All batches completed! ✅\n`;
+      prompt += `3. **Run validate-aso** to verify all locales:\n`;
+      prompt += `   \`\`\`\n   validate-aso(slug="${slug}")\n   \`\`\`\n\n`;
     }
   }
 
@@ -355,7 +364,22 @@ export function generateKeywordLocalizationPrompt(
   prompt += `---\n\n`;
   prompt += `Repeat for all locales in this batch: ${nonPrimaryLocales.join(
     ", "
-  )}\n`;
+  )}\n\n`;
+
+  // Add final validation step for last batch or when processing all at once
+  const isLastBatch =
+    batchIndex === undefined ||
+    (totalBatches && batchIndex + 1 >= totalBatches);
+  if (isLastBatch) {
+    prompt += `---\n\n`;
+    prompt += `## Final Step: Validate All Locales\n\n`;
+    prompt += `After completing ALL locale optimizations, run validation:\n`;
+    prompt += `\`\`\`\nvalidate-aso(slug="${slug}")\n\`\`\`\n\n`;
+    prompt += `This checks:\n`;
+    prompt += `- Field length limits (title ≤30, subtitle ≤30, keywords ≤100, etc.)\n`;
+    prompt += `- Keyword duplicates\n`;
+    prompt += `- Invalid characters\n`;
+  }
 
   return prompt;
 }

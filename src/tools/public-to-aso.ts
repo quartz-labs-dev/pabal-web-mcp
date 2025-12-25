@@ -2,6 +2,12 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import path from "node:path";
 import { loadAsoFromConfig } from "../utils/aso-converter.js";
+import {
+  FIELD_LIMITS_DOC_PATH,
+  sanitizeAsoData,
+  validateFieldLimits,
+  formatValidationIssues,
+} from "../utils/aso-validation.util.js";
 import { prepareAsoDataForPush } from "./utils/public-to-aso/prepare-aso-data-for-push.util.js";
 import { saveRawAsoData } from "./utils/public-to-aso/save-raw-aso-data.util.js";
 import { downloadImage } from "./utils/public-to-aso/download-image.util.js";
@@ -17,8 +23,6 @@ import {
 import type { AsoData } from "../types/aso/index.js";
 import {
   DEFAULT_LOCALE,
-  GOOGLE_PLAY_SUPPORTED_LOCALES,
-  APP_STORE_SUPPORTED_LOCALES,
   type UnifiedLocale,
 } from "../constants/unified-locales.js";
 import {
@@ -27,24 +31,6 @@ import {
 } from "../utils/locale-converter.js";
 import { getPushDataDir, getProductsDir } from "../utils/config.util.js";
 import fs from "node:fs";
-
-const FIELD_LIMITS_DOC_PATH = "docs/aso/ASO_FIELD_LIMITS.md";
-const APP_STORE_LIMITS = {
-  name: 30,
-  subtitle: 30,
-  keywords: 100,
-  promotionalText: 170,
-  description: 4000,
-  whatsNew: 4000,
-};
-const GOOGLE_PLAY_LIMITS = {
-  title: 50,
-  shortDescription: 80,
-  fullDescription: 4000,
-};
-
-const INVALID_CHAR_REGEX =
-  /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\uFEFF\u200B-\u200F\u202A-\u202E\u2060\uFE00-\uFE0F]/g; // Control + BOM + zero-width/invisible/variation selectors
 
 const toJsonSchema: (
   schema: z.ZodTypeAny,
@@ -79,150 +65,6 @@ const jsonSchema = toJsonSchema(publicToAsoInputSchema, {
 });
 
 const inputSchema = jsonSchema.definitions?.PublicToAsoInput || jsonSchema;
-
-function sanitizeText(
-  value: string | undefined,
-  fieldPath: string,
-  warnings: string[]
-): string | undefined {
-  if (typeof value !== "string") {
-    return value;
-  }
-  const cleaned = value.replace(INVALID_CHAR_REGEX, "");
-  if (cleaned !== value) {
-    warnings.push(`Removed invalid characters from ${fieldPath}`);
-  }
-  return cleaned;
-}
-
-function sanitizeAsoData(configData: AsoData): {
-  sanitizedData: AsoData;
-  warnings: string[];
-} {
-  const sanitizedData: AsoData = JSON.parse(JSON.stringify(configData));
-  const warnings: string[] = [];
-
-  if (sanitizedData.appStore) {
-    const appStoreData = sanitizedData.appStore;
-    const locales = isAppStoreMultilingual(appStoreData)
-      ? appStoreData.locales
-      : { [appStoreData.locale || DEFAULT_LOCALE]: appStoreData };
-
-    for (const [locale, data] of Object.entries(locales)) {
-      data.name = sanitizeText(data.name, `App Store [${locale}].name`, warnings)!;
-      data.subtitle = sanitizeText(
-        data.subtitle,
-        `App Store [${locale}].subtitle`,
-        warnings
-      );
-      data.keywords = sanitizeText(
-        data.keywords,
-        `App Store [${locale}].keywords`,
-        warnings
-      );
-      data.promotionalText = sanitizeText(
-        data.promotionalText,
-        `App Store [${locale}].promotionalText`,
-        warnings
-      );
-      data.description = sanitizeText(
-        data.description,
-        `App Store [${locale}].description`,
-        warnings
-      )!;
-      data.whatsNew = sanitizeText(
-        data.whatsNew,
-        `App Store [${locale}].whatsNew`,
-        warnings
-      );
-    }
-  }
-
-  if (sanitizedData.googlePlay) {
-    const googlePlayData = sanitizedData.googlePlay;
-    const locales = isGooglePlayMultilingual(googlePlayData)
-      ? googlePlayData.locales
-      : {
-          [googlePlayData.defaultLanguage || DEFAULT_LOCALE]: googlePlayData,
-        };
-
-    for (const [locale, data] of Object.entries(locales)) {
-      data.title = sanitizeText(
-        data.title,
-        `Google Play [${locale}].title`,
-        warnings
-      )!;
-      data.shortDescription = sanitizeText(
-        data.shortDescription,
-        `Google Play [${locale}].shortDescription`,
-        warnings
-      )!;
-      data.fullDescription = sanitizeText(
-        data.fullDescription,
-        `Google Play [${locale}].fullDescription`,
-        warnings
-      )!;
-    }
-  }
-
-  return { sanitizedData, warnings };
-}
-
-function validateFieldLimits(configData: AsoData): string[] {
-  const issues: string[] = [];
-
-  if (configData.appStore) {
-    const appStoreData = configData.appStore;
-    const locales = isAppStoreMultilingual(appStoreData)
-      ? appStoreData.locales
-      : { [appStoreData.locale || DEFAULT_LOCALE]: appStoreData };
-
-    for (const [locale, data] of Object.entries(locales)) {
-      const { name, subtitle, keywords, promotionalText, description, whatsNew } =
-        data;
-      const push = (field: string, value: string | undefined, limit: number) => {
-        if (typeof value === "string" && value.length > limit) {
-          issues.push(
-            `App Store [${locale}].${field}: ${value.length}/${limit}`
-          );
-        }
-      };
-      push("name", name, APP_STORE_LIMITS.name);
-      push("subtitle", subtitle, APP_STORE_LIMITS.subtitle);
-      push("keywords", keywords, APP_STORE_LIMITS.keywords);
-      push("promotionalText", promotionalText, APP_STORE_LIMITS.promotionalText);
-      push("description", description, APP_STORE_LIMITS.description);
-      push("whatsNew", whatsNew, APP_STORE_LIMITS.whatsNew);
-    }
-  }
-
-  if (configData.googlePlay) {
-    const googlePlayData = configData.googlePlay;
-    const locales = isGooglePlayMultilingual(googlePlayData)
-      ? googlePlayData.locales
-      : { [googlePlayData.defaultLanguage || DEFAULT_LOCALE]: googlePlayData };
-
-    for (const [locale, data] of Object.entries(locales)) {
-      const { title, shortDescription, fullDescription } = data;
-      const push = (field: string, value: string | undefined, limit: number) => {
-        if (typeof value === "string" && value.length > limit) {
-          issues.push(
-            `Google Play [${locale}].${field}: ${value.length}/${limit}`
-          );
-        }
-      };
-      push("title", title, GOOGLE_PLAY_LIMITS.title);
-      push(
-        "shortDescription",
-        shortDescription,
-        GOOGLE_PLAY_LIMITS.shortDescription
-      );
-      push("fullDescription", fullDescription, GOOGLE_PLAY_LIMITS.fullDescription);
-    }
-  }
-
-  return issues;
-}
 
 /**
  * Download/copy screenshots to pushData directory
@@ -417,7 +259,8 @@ export async function handlePublicToAso(
 
   // Load ASO data from config.json + locales/
   const configData = loadAsoFromConfig(slug);
-  const { sanitizedData, warnings: sanitizeWarnings } = sanitizeAsoData(configData);
+  const { sanitizedData, warnings: sanitizeWarnings } =
+    sanitizeAsoData(configData);
 
   if (!sanitizedData.googlePlay && !sanitizedData.appStore) {
     const productsDir = getProductsDir();
@@ -515,12 +358,7 @@ export async function handlePublicToAso(
   // Prepare data for push (remove screenshots, set contactWebsite, etc.)
   const storeData = prepareAsoDataForPush(slug, sanitizedData);
   const validationIssues = validateFieldLimits(sanitizedData);
-  const validationMessage =
-    validationIssues.length > 0
-      ? `⚠️ Field limit issues (see ${FIELD_LIMITS_DOC_PATH}):\n- ${validationIssues.join(
-          "\n- "
-        )}`
-      : `Field limits OK (checked against ${FIELD_LIMITS_DOC_PATH})`;
+  const validationMessage = formatValidationIssues(validationIssues);
 
   const pushDataRoot = getPushDataDir();
 
@@ -535,7 +373,9 @@ export async function handlePublicToAso(
             2
           )}\n\n${validationMessage}${
             sanitizeWarnings.length
-              ? `\nSanitized invalid characters:\n- ${sanitizeWarnings.join("\n- ")}`
+              ? `\nSanitized invalid characters:\n- ${sanitizeWarnings.join(
+                  "\n- "
+                )}`
               : ""
           }`,
         },

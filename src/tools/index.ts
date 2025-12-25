@@ -42,6 +42,11 @@ import {
   searchAppInputSchema,
   handleSearchApp,
 } from "./search-app.js";
+import {
+  validateAsoTool,
+  validateAsoInputSchema,
+  handleValidateAso,
+} from "./validate-aso.js";
 import type { z } from "zod";
 
 export interface ToolInfo {
@@ -113,6 +118,14 @@ export const tools: ToolInfo[] = [
     handler: handleSearchApp,
     category: "App Management",
   },
+  {
+    name: validateAsoTool.name,
+    description: validateAsoTool.description,
+    inputSchema: validateAsoTool.inputSchema,
+    zodSchema: validateAsoInputSchema,
+    handler: handleValidateAso,
+    category: "ASO Validation",
+  },
 ];
 
 /**
@@ -127,6 +140,7 @@ export function getToolDefinitions() {
     createBlogHtmlTool,
     keywordResearchTool,
     searchAppTool,
+    validateAsoTool,
   ];
 }
 
