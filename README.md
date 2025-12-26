@@ -6,7 +6,7 @@ Build synced websites from App Store Connect and Google Play Console data.
 
 > 💡 **Example**: [labs.quartz.best](https://labs.quartz.best/)
 
-[![Documentation](https://img.shields.io/badge/docs-English-blue)](./docs/en/README.md) [![한국어](https://img.shields.io/badge/docs-한국어-green)](./docs/ko/README.md)
+[![Documentation](https://img.shields.io/badge/docs-English-blue)](https://pabal.quartz.best/docs/en/pabal-mcp/README) [![한국어](https://img.shields.io/badge/docs-한국어-green)](https://pabal.quartz.best/docs/ko/pabal-mcp/README)
 
 ## Installation
 
@@ -51,15 +51,13 @@ Set `dataDir` in `~/.config/pabal-mcp/config.json`:
 }
 ```
 
-See [pabal-mcp](https://github.com/quartz-labs-dev/pabal-mcp) for credential setup.
-
 ## Tools
 
-| Category | Tools |
-|----------|-------|
-| ASO | `aso-to-public`, `public-to-aso`, `improve-public`, `validate-aso`, `keyword-research` |
-| Apps | `init-project`, `search-app` |
-| Content | `create-blog-html` |
+| Category | Tools                                                                                  |
+| -------- | -------------------------------------------------------------------------------------- |
+| ASO      | `aso-to-public`, `public-to-aso`, `improve-public`, `validate-aso`, `keyword-research` |
+| Apps     | `init-project`, `search-app`                                                           |
+| Content  | `create-blog-html`                                                                     |
 
 See [documentation](./docs/en/README.md) for details.
 
