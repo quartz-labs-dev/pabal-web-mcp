@@ -152,7 +152,10 @@ export function validateFieldLimits(configData: AsoData): ValidationIssue[] {
         field: keyof typeof APP_STORE_LIMITS,
         value: string | undefined
       ) => {
-        if (typeof value === "string" && value.length > APP_STORE_LIMITS[field]) {
+        if (
+          typeof value === "string" &&
+          value.length > APP_STORE_LIMITS[field]
+        ) {
           issues.push({
             locale,
             store: "appStore",
@@ -186,7 +189,10 @@ export function validateFieldLimits(configData: AsoData): ValidationIssue[] {
         field: keyof typeof GOOGLE_PLAY_LIMITS,
         value: string | undefined
       ) => {
-        if (typeof value === "string" && value.length > GOOGLE_PLAY_LIMITS[field]) {
+        if (
+          typeof value === "string" &&
+          value.length > GOOGLE_PLAY_LIMITS[field]
+        ) {
           issues.push({
             locale,
             store: "googlePlay",
@@ -301,4 +307,3 @@ export function validateKeywords(configData: AsoData): {
 
   return issues;
 }
-

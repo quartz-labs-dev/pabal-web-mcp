@@ -27,6 +27,156 @@ yarn add pabal-web-mcp
 pnpm add pabal-web-mcp
 ```
 
+### MCP Client Configuration
+
+> **Note**: The `mcp-appstore` server is required for keyword research functionality. Make sure to install dependencies first: `cd external-tools/mcp-appstore && npm install`
+
+#### Install in Cursor
+
+Add to `~/.cursor/mcp.json` (global) or project `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+#### Install in VS Code
+
+Example `settings.json` MCP section:
+
+```json
+"mcp": {
+  "servers": {
+    "pabal-web-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+"mcp": {
+  "servers": {
+    "pabal-web-mcp": {
+      "type": "stdio",
+      "command": "pabal-web-mcp"
+    },
+    "mcp-appstore": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+#### Install in Claude Code
+
+> [!TIP]
+> See the [official Claude Code MCP documentation](https://code.claude.com/docs/en/mcp#setting-up-enterprise-mcp-configuration) for detailed configuration options.
+
+Add to Claude Code MCP settings (JSON format):
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+#### Install in Windsurf
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
 ## 🔐 Configure Credentials
 
 pabal-web-mcp uses the configuration file from `pabal-mcp`. For detailed credential setup instructions (App Store Connect API keys, Google Play service accounts, etc.), please refer to the [pabal-mcp README](https://github.com/quartz-labs-dev/pabal-mcp?tab=readme-ov-file#-configure-credentials).
@@ -72,21 +222,13 @@ This package includes an MCP server for managing ASO data through Claude or othe
 
 ### Using external keyword MCP ([appreply-co/mcp-appstore](https://github.com/appreply-co/mcp-appstore))
 
+The `mcp-appstore` server provides keyword research capabilities that work with `keyword-research` tool. To use it:
+
 1. Install deps in the existing clone: `cd external-tools/mcp-appstore && npm install`
-2. Run server: `node server.js` (same cwd; `npm start` also works). If your MCP client allows, let the LLM start this process before keyword research and stop it after; otherwise start/stop it manually.
-3. Register in your MCP client (example):
-   ```json
-   {
-     "mcpServers": {
-       "mcp-appstore": {
-         "command": "node",
-         "args": ["/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"],
-         "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
-       }
-     }
-   }
-   ```
-4. Use it with `keyword-research` (saves to `.aso/keywordResearch/...`) before `improve-public` to supply keyword data.
+2. Register `mcp-appstore` in your MCP client (see configuration examples above)
+3. Use it with `keyword-research` (saves to `.aso/keywordResearch/...`) before `improve-public` to supply keyword data.
+
+> **Note**: If your MCP client allows, let the LLM start this process before keyword research and stop it after; otherwise start/stop it manually.
 
 ### Supported Locales
 

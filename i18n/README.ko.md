@@ -27,6 +27,156 @@ yarn add pabal-web-mcp
 pnpm add pabal-web-mcp
 ```
 
+### MCP 클라이언트 설정
+
+> **참고**: `mcp-appstore` 서버는 키워드 리서치 기능에 필요합니다. 먼저 의존성을 설치하세요: `cd external-tools/mcp-appstore && npm install`
+
+#### Cursor에 설치
+
+`~/.cursor/mcp.json` (전역) 또는 프로젝트 `.cursor/mcp.json`에 추가:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+또는 전역 설치된 경우:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+#### VS Code에 설치
+
+`settings.json` MCP 섹션 예시:
+
+```json
+"mcp": {
+  "servers": {
+    "pabal-web-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+또는 전역 설치된 경우:
+
+```json
+"mcp": {
+  "servers": {
+    "pabal-web-mcp": {
+      "type": "stdio",
+      "command": "pabal-web-mcp"
+    },
+    "mcp-appstore": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+#### Claude Code에 설치
+
+> [!TIP]
+> 자세한 설정 옵션은 [공식 Claude Code MCP 문서](https://code.claude.com/docs/en/mcp#setting-up-enterprise-mcp-configuration)를 참조하세요.
+
+Claude Code MCP 설정에 추가 (JSON 형식):
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+또는 전역 설치된 경우:
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "pabal-web-mcp"
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
+#### Windsurf에 설치
+
+```json
+{
+  "mcpServers": {
+    "pabal-web-mcp": {
+      "command": "npx",
+      "args": ["-y", "pabal-web-mcp"]
+    },
+    "mcp-appstore": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"
+      ],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
+    }
+  }
+}
+```
+
 ## 🔐 자격 증명 설정
 
 pabal-web-mcp는 `pabal-mcp`의 설정 파일을 사용합니다. 자세한 자격 증명 설정 방법(App Store Connect API 키, Google Play 서비스 계정 등)은 [pabal-mcp README](https://github.com/quartz-labs-dev/pabal-mcp?tab=readme-ov-file#-configure-credentials)를 참조하세요.
@@ -70,23 +220,15 @@ pabal-web-mcp는 `pabal-mcp`의 설정 파일을 사용합니다. 자세한 자�
 | `init-project`     | 새로운 제품 프로젝트 구조 초기화                   |
 | `create-blog-html` | BLOG_META 헤더가 있는 정적 HTML 블로그 포스트 생성 |
 
-### 외부 키워드 MCP ([appreply-co/mcp-appstore](https://github.com/appreply-co/mcp-appstore)) 연결
+### 외부 키워드 MCP 사용 ([appreply-co/mcp-appstore](https://github.com/appreply-co/mcp-appstore))
 
-1. 의존성 설치(이미 클론되어 있음): `cd /ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore && npm install`
-2. 서버 실행: `node server.js` (같은 cwd, `npm start`도 동작). MCP 클라이언트가 지원하면 LLM이 키워드 리서치 전 이 프로세스를 켜고 끝나면 끄도록 하세요. 지원하지 않으면 사용자가 직접 start/stop 합니다.
-3. MCP 클라이언트에 등록 (예시):
-   ```json
-   {
-     "mcpServers": {
-       "mcp-appstore": {
-         "command": "node",
-         "args": ["/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore/server.js"],
-         "cwd": "/ABSOLUTE/PATH/TO/pabal-web-mcp/external-tools/mcp-appstore"
-       }
-     }
-   }
-   ```
-4. `keyword-research` 실행 시 이 서버의 도구들을 사용해 키워드 데이터를 `.aso/keywordResearch/...`에 저장하고, 이후 `improve-public`에서 활용합니다.
+`mcp-appstore` 서버는 `keyword-research` 도구와 함께 작동하는 키워드 리서치 기능을 제공합니다. 사용 방법:
+
+1. 기존 클론에 의존성 설치: `cd external-tools/mcp-appstore && npm install`
+2. MCP 클라이언트에 `mcp-appstore` 등록 (위의 설정 예시 참조)
+3. 키워드 데이터를 제공하기 위해 `improve-public` 전에 `keyword-research`와 함께 사용합니다 (`.aso/keywordResearch/...`에 저장).
+
+> **참고**: MCP 클라이언트가 지원하는 경우, LLM이 키워드 리서치 전에 이 프로세스를 시작하고 종료 후 중지하도록 하세요. 그렇지 않으면 수동으로 시작/중지합니다.
 
 ### 지원 로케일
 

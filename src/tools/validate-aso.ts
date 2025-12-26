@@ -93,7 +93,9 @@ interface LocaleStats {
   }[];
 }
 
-function getLocaleStats(configData: ReturnType<typeof loadAsoFromConfig>): LocaleStats[] {
+function getLocaleStats(
+  configData: ReturnType<typeof loadAsoFromConfig>
+): LocaleStats[] {
   const stats: LocaleStats[] = [];
 
   if (configData.appStore) {
@@ -120,7 +122,11 @@ function getLocaleStats(configData: ReturnType<typeof loadAsoFromConfig>): Local
       checkField("name", data.name, APP_STORE_LIMITS.name);
       checkField("subtitle", data.subtitle, APP_STORE_LIMITS.subtitle);
       checkField("keywords", data.keywords, APP_STORE_LIMITS.keywords);
-      checkField("promotionalText", data.promotionalText, APP_STORE_LIMITS.promotionalText);
+      checkField(
+        "promotionalText",
+        data.promotionalText,
+        APP_STORE_LIMITS.promotionalText
+      );
       checkField("description", data.description, APP_STORE_LIMITS.description);
 
       stats.push({ locale, store: "appStore", fields });
@@ -149,8 +155,16 @@ function getLocaleStats(configData: ReturnType<typeof loadAsoFromConfig>): Local
       };
 
       checkField("title", data.title, GOOGLE_PLAY_LIMITS.title);
-      checkField("shortDescription", data.shortDescription, GOOGLE_PLAY_LIMITS.shortDescription);
-      checkField("fullDescription", data.fullDescription, GOOGLE_PLAY_LIMITS.fullDescription);
+      checkField(
+        "shortDescription",
+        data.shortDescription,
+        GOOGLE_PLAY_LIMITS.shortDescription
+      );
+      checkField(
+        "fullDescription",
+        data.fullDescription,
+        GOOGLE_PLAY_LIMITS.fullDescription
+      );
 
       stats.push({ locale, store: "googlePlay", fields });
     }
@@ -180,7 +194,11 @@ function formatStats(stats: LocaleStats[], filterLocale?: string): string {
 
     for (const field of stat.fields) {
       const statusEmoji =
-        field.status === "error" ? "❌" : field.status === "warning" ? "⚠️" : "✅";
+        field.status === "error"
+          ? "❌"
+          : field.status === "warning"
+          ? "⚠️"
+          : "✅";
       lines.push(
         `| ${field.field} | ${field.length} | ${field.limit} | ${statusEmoji} |`
       );
@@ -211,13 +229,16 @@ export async function handleValidateAso(
   results.push(`# ASO Validation Report: ${slug}\n`);
 
   // 1. Sanitize and check for invalid characters
-  const { sanitizedData, warnings: sanitizeWarnings } = sanitizeAsoData(configData);
+  const { sanitizedData, warnings: sanitizeWarnings } =
+    sanitizeAsoData(configData);
 
   if (sanitizeWarnings.length > 0) {
     results.push(`## Invalid Characters Found\n`);
     if (fix) {
       results.push(
-        `The following invalid characters were ${fix ? "removed" : "detected"}:\n`
+        `The following invalid characters were ${
+          fix ? "removed" : "detected"
+        }:\n`
       );
     }
     for (const warning of sanitizeWarnings) {
@@ -245,9 +266,7 @@ export async function handleValidateAso(
   if (filteredKeywordIssues.length > 0) {
     results.push(`## Keyword Duplicates\n`);
     for (const issue of filteredKeywordIssues) {
-      results.push(
-        `- [${issue.locale}]: ${issue.duplicates.join(", ")}`
-      );
+      results.push(`- [${issue.locale}]: ${issue.duplicates.join(", ")}`);
     }
     results.push("");
   }
@@ -257,15 +276,20 @@ export async function handleValidateAso(
   results.push(formatStats(stats, locale));
 
   // 5. Summary
-  const hasErrors = filteredIssues.length > 0 || filteredKeywordIssues.length > 0;
+  const hasErrors =
+    filteredIssues.length > 0 || filteredKeywordIssues.length > 0;
   const hasSanitizeWarnings = sanitizeWarnings.length > 0;
 
   results.push(`---\n`);
   if (hasErrors) {
-    results.push(`❌ **Validation failed** - Fix the issues above before pushing to stores.`);
+    results.push(
+      `❌ **Validation failed** - Fix the issues above before pushing to stores.`
+    );
     results.push(`\nReference: ${FIELD_LIMITS_DOC_PATH}`);
   } else if (hasSanitizeWarnings && !fix) {
-    results.push(`⚠️ **Invalid characters detected** - Run with \`fix: true\` to auto-remove.`);
+    results.push(
+      `⚠️ **Invalid characters detected** - Run with \`fix: true\` to auto-remove.`
+    );
   } else {
     results.push(`✅ **Validation passed** - Ready to push to stores.`);
   }
@@ -279,4 +303,3 @@ export async function handleValidateAso(
     ],
   };
 }
-
