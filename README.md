@@ -6,7 +6,7 @@ Build synced websites from App Store Connect and Google Play Console data.
 
 > 💡 **Example**: [labs.quartz.best](https://labs.quartz.best/)
 
-[![Documentation](https://img.shields.io/badge/docs-English-blue)](https://pabal.quartz.best/docs/en/pabal-mcp/README) [![한국어](https://img.shields.io/badge/docs-한국어-green)](https://pabal.quartz.best/docs/ko/pabal-mcp/README)
+[![Documentation](https://img.shields.io/badge/docs-English-blue)](https://pabal.quartz.best/docs/en-US/pabal-mcp/README) [![한국어](https://img.shields.io/badge/docs-한국어-green)](https://pabal.quartz.best/docs/ko-KR/pabal-mcp/README)
 
 ## Installation
 
@@ -59,7 +59,7 @@ Set `dataDir` in `~/.config/pabal-mcp/config.json`:
 | Apps     | `init-project`, `search-app`                                                           |
 | Content  | `create-blog-html`                                                                     |
 
-See [documentation](./docs/en/README.md) for details.
+See [documentation](./docs/en-US/README.md) for details.
 
 ## License
 
